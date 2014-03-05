@@ -18,23 +18,32 @@ public class MovieQueryFactory {
 	public static void main(String[] args) 
 	{
 		//String source="./movieList";
-		MovieQueryFactory qf=new MovieQueryFactory();
+		
 
 
 	}
-private  HashMap<String, String> query=null;
-	public  MovieQueryFactory()
+private  HashMap<String, String> taoBaoquery=new HashMap<String,String>();
+private  ArrayList<MovieItem> movieItemQuery=new ArrayList<MovieItem>();
+	public  MovieQueryFactory(String type)
 	{
-		if(query==null)
-			query= new HashMap<String, String>();
+		
 		try
 		{
+			if(type.equals("Taobao"))
+			{
 			MysqlDatabase md=new MysqlDatabase();
-			ArrayList<MovieItem> miList=md.batchsearchMovieDataFromMysql();
+			ArrayList<MovieItem> miList=md.batchsearchTaobaoMovieDataFromMysql();
 			for(MovieItem mi:miList)
 				{
-				query.put(mi.get_movie_name().substring(0,mi.get_movie_name().indexOf("(")),mi.get_movie_id());
+				taoBaoquery.put(mi.get_movie_name(),mi.get_movie_id());
 				}
+			}
+			if(type.equals("GoogleImage"))
+			{
+				MysqlDatabase md=new MysqlDatabase();
+				movieItemQuery=md.batchsearchGoogleImageMovieDataFromMysql();
+				
+			}
 		}
 		catch(Exception e)
 		{
@@ -44,8 +53,13 @@ private  HashMap<String, String> query=null;
 	
 
 	
-	public HashMap<String,String> getQuery()
+	public HashMap<String,String> getTaobaoQuery()
 	{
-		return query;
+		return taoBaoquery;
+	}
+	
+	public ArrayList<MovieItem> getMovieItemQuery()
+	{
+		return movieItemQuery;
 	}
 }

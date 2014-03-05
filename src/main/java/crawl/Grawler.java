@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Vector;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 
 
@@ -27,101 +29,63 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 import org.codehaus.jackson.annotate.JsonMethod;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig.Feature;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+
+import com.gargoylesoftware.htmlunit.AjaxController;
+import com.gargoylesoftware.htmlunit.ThreadedRefreshHandler;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
+import query.MovieQueryFactory;
+
+import database.MysqlDatabase;
+import entity.MovieItem;
 
 import util.FileName2Pinyin;
+import util.MD5Generator;
 import util.URLEncoding;
-
-
-
-
-
 
 
 public class Grawler 
 {  
-	final static Log log = LogFactory.getLog(Grawler.class);
-	Vector<String> taskTrackQueue=null;
+	static Logger log = Logger.getLogger("task");
+	
 	double threashold;
 	int number_limit;
-	LinkedList<String> keywordList=new LinkedList<String>();
-	Vector<String> taskQueue=null;
-	Vector<String> movieNameList=new Vector<String>();
-	public static Object signal = new Object();
-	static Future<String> future=null;
-	
-	
-	
+	HashMap<String,String>  movie_nameID;
+	ArrayList<String> webList;
+	MysqlDatabase database=new MysqlDatabase();
+
 	public Grawler()
 	{
 		 java.util.Properties prop=new 	java.util.Properties();
 		 try {
 			prop.load(new FileInputStream("./config"));
 		} catch (IOException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		
-		threashold= new Double(prop.get("threshold").toString());
+		
 		number_limit=new Integer(prop.get("number").toString());
-		
-		
 		try
 		{
-		BufferedReader readerLex=new BufferedReader(new FileReader("./Lex"));
-		
-		
-		String keyword="";
-		
-		while((keyword=readerLex.readLine())!=null)
-		{
-			String s=keyword;
-			keywordList.add(s);
-		}
-		
-		for(int i=0;i<keywordList.size();i++)
-		{
-			System.out.println(keywordList.get(i));
-		}
-		
-		readerLex.close();
+		 MovieQueryFactory mqf=new MovieQueryFactory("GoogleImage");
+	     ArrayList<MovieItem> miList=mqf.getMovieItemQuery();
+		 webList=database.batchsearchWebsitesFromMysql();
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
-		
-		try
-		{
-			
-		BufferedReader readerMovie=new BufferedReader(new FileReader("./movieList"));
-		String movieName="";
-	    while((movieName=readerMovie.readLine())!=null)
-		{
-			String s=movieName;
-			movieNameList.add(s);
-		}
-					
-		readerMovie.close();
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		
-//		taskQueue=new Vector<String>();
-//		taskTrackQueue=new Vector<String>();
 	}
-	
-	
-	
-	
-	
-	
 	
 	public ObjectMapper getJsonMapper() 
 	{
@@ -130,32 +94,10 @@ public class Grawler
 		mapper.setVisibility(JsonMethod.FIELD, Visibility.ANY);
 		mapper.configure(Feature.INDENT_OUTPUT, true);
 		return mapper;
-		
 	}
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	public synchronized ArrayList<String> crawler_google_image_htmlFormat(String date,String movie_name) throws IOException 
+	public synchronized void crawler_google_image_htmlFormat(String date,String movieName, String site,BlockingQueue<String> taskQueue)  
 	{
-		ArrayList<String> ci_list=new ArrayList<String>();
-		
-		 String pinyin=FileName2Pinyin.convertHanzi2PinyinStr(movie_name);
-		 
-		 
+		 String pinyin=FileName2Pinyin.convertHanzi2PinyinStr(movieName);
 		 java.util.Properties prop=new 	java.util.Properties();
 		 try {
 			prop.load(new FileInputStream("./config"));
@@ -164,19 +106,15 @@ public class Grawler
 			e2.printStackTrace();
 		}
 		//File movieFolder=new File("/mnt/nfs/nas179/rideo/"+pinyin);
-		File movieFolder=new File("/mnt/nfs/nas179/rideo_Minterest/"+pinyin);
-		 
-		//File movieFolder=new File(prop.getProperty("movieFolder")+pinyin);
-	    // File movieFolder=new File("/rideo/"+pinyin);
+	    File movieFolder=new File("/rideo/"+pinyin);
 		  if(!movieFolder.exists())
 		  {
 			  System.out.println(movieFolder.getAbsolutePath());
 			  movieFolder.mkdirs();
 		  }
 		  
-		
-
-			String[] user_agents = {
+			String[] user_agents = 
+				{
 					       "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)",//ok
 					     //  "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20130406 Firefox/23.0", //not work
 			             //  "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0", //not work
@@ -189,46 +127,80 @@ public class Grawler
 			              // "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0; TheWorld)",//not work
 			               //"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.66 Safari/537.36"
 			};
-			
-			HashMap<String,Boolean> keywordToDoMap=new HashMap<String,Boolean>();
-			for(int i=0;i<keywordList.size();i++)
-			{
-				String keywordPY=FileName2Pinyin.convertHanzi2PinyinStr(keywordList.get(i));
-				keywordToDoMap.put(keywordPY, false);
+			int num_pages=0;
+			try {
+				String first_urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
+				
+				WebClient webClient = new WebClient();
+				webClient.setJavaScriptEnabled(false);
+		    	webClient.setCssEnabled(false);
+		    	webClient.setTimeout(60000);
+		    	webClient.setRefreshHandler(new ThreadedRefreshHandler());
+		    	webClient.setAjaxController(new AjaxController());
+		    	HtmlPage first_htmlPage=null;
+		    	first_htmlPage = webClient.getPage(first_urlStr);
+		    	Document first_doc = Jsoup.parse(first_htmlPage.asXml());
+		    	
+		    	if(first_doc.select("[id=resultStats]")!=null)
+		    	{
+		  String number=first_doc.select("[id=resultStats]").html().trim().replace("About", "").replace("results", "").replace(",","").trim();
+		    	
+		 num_pages=(int) (Double.valueOf(number)/20)+1;
+		  
+		  System.out.println(num_pages);
+		  if(num_pages>50)
+		  {
+			  movieName="《"+movieName+"》";
+			  first_urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
+				System.out.println(first_urlStr);
+				webClient = new WebClient();
+				webClient.setJavaScriptEnabled(false);
+		    	webClient.setCssEnabled(false);
+		    	webClient.setTimeout(60000);
+		    	webClient.setRefreshHandler(new ThreadedRefreshHandler());
+		    	webClient.setAjaxController(new AjaxController());
+		    	first_htmlPage=null;
+		    	first_htmlPage = webClient.getPage(first_urlStr);
+		    	first_doc = Jsoup.parse(first_htmlPage.asXml());
+		    	
+		    	if(first_doc.select("[id=resultStats]")!=null)
+		    	{
+		 number=first_doc.select("[id=resultStats]").html().trim().replace("About", "").replace("results", "").replace(",","").trim();
+		    	
+		 num_pages=(int) (Double.valueOf(number)/20)+1;
+			System.out.println(num_pages);
+		  }
+		  }
+		  if(num_pages>25)
+		  {
+			  num_pages=25;
+		  }
+		    	
 			}
-		
-			
-			for(int j=0;j<keywordList.size();j++)
-			{
-				   String keyword_pinyin=FileName2Pinyin.convertHanzi2PinyinStr(keywordList.get(j));
-			       String keyword_folder=movieFolder.getAbsolutePath()+"/"+keyword_pinyin;
-			       
-			       if(!new File(keyword_folder).exists())
-			    	   new File(keyword_folder).mkdirs();
-			       
-			       File configFile=new File(keyword_folder+"/"+"config");
-					  if(!configFile.exists())
-						  configFile.createNewFile();
-	      for(int i=0;i<number_limit;i++)
+			}catch (MalformedURLException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	      for(int i=0;i<num_pages;i++)
 	      {
-	    	 
-
-		   URL url=new URL("http://www.google.com/search?hl=en&site=imghp&tbm=isch&source=hp&q=" +URLEncoding.encode(movie_name)+"+"+URLEncoding.encode(keywordList.get(j).toString())+
-			    			"&start="+20*i);
+	    try
+	    {
+	     String urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch&start="+i*20;
+           System.out.println(urlStr);
+		   URL url=new URL(urlStr);
 	   
 	    	HttpURLConnection cont = (HttpURLConnection) url.openConnection();
 	    	cont.setConnectTimeout(10000);
-	    	
-	    	
 	    	int random=(int)(Math.random()*2) ;
 	        cont.setRequestProperty("User-Agent",user_agents[random] );            
 	        cont.connect();
 	        BufferedReader  reader = new BufferedReader(new InputStreamReader(cont.getInputStream()));
-	        String outputFileName=movieFolder.getAbsolutePath()+"/"+keyword_pinyin+"/"+date+"_"+i+".html";
-	        
+	        String outputFileName=movieFolder.getAbsolutePath()+"/"+MD5Generator.execute(site)+"_"+date+"_"+i+".html";
 	        FileWriter fw = new FileWriter(outputFileName);
 			BufferedWriter bw = new BufferedWriter(fw);
-	       
 	        String s;        
 	        while((s=reader.readLine())!=null) 
 	        {
@@ -238,61 +210,7 @@ public class Grawler
 	        bw.flush();
 	        bw.close();
 	        
-	        
-	        BufferedReader configReader=new BufferedReader(new FileReader(configFile));
-	        String lastFileName=null;
-	        String line=null;
-	        while((line=configReader.readLine())!=null)
-	        {
-	        	
-	        	lastFileName=line;
-	        }
-	        
-	        configReader.close();
-	        
-	        
-	        boolean needsUpdate=true;
-	        if(lastFileName==null)
-	        {
-	        	
-	        }
-	        else
-	        {
-	        	
-		        needsUpdate=compare(outputFileName,lastFileName);
-	        }
-	        
-	        if(needsUpdate)
-	        {
-	        	
-	        	
-	        	
-	            try
-		   {
-
-		        PageAnalyzer pgAnalyzer=new PageAnalyzer();
-		        String[] query={movie_name,keywordList.get(j).toString()};
-		        double score= pgAnalyzer.analyzer(query,outputFileName);
-		       if(score<threashold)
-		       {
-		    	   new File(outputFileName).delete();
-		    	   break;
-		       }
-		       else
-		       {
-		    	   if(i==0)
-		        	{
-		        		BufferedWriter configWriter=new BufferedWriter(new FileWriter(configFile));
-		        		configWriter.write(outputFileName);
-		        		configWriter.flush();
-		        		configWriter.close();
-		        	}
-		    	   
-		    	   
-		        	
-		       }
-		      }
-		    
+	    }  
 		      catch(Exception e)
 		      {
 		    	  e.printStackTrace();
@@ -305,71 +223,9 @@ public class Grawler
 				}
 		      }
 		     }
-
-	        else
-	        {
-	        	
-	        	new File(outputFileName).delete();
-	        	break;
-	        }
-	        	
-	       
-	        	
-	      }
-	      
-	        
-	        
-	   
 	      int r=(int) (Math.random()*2);
 	      try
 	      {
-
-	     // For here we have all htmls. 
-//	      final String folderName=movieFolder.getAbsolutePath()+"/"+keyword_pinyin;
-//	      new File(folderName).getAbsolutePath();
-//	      
-//	      ExecutorService threadPool = Executors.newCachedThreadPool();
-//	  	
-//			CompletionService<Integer> cs = new ExecutorCompletionService<Integer>(threadPool);
-//			 cs.submit(new Callable<Integer>() 
-//					{  
-//	                public Integer call() throws Exception 
-//	                {  
-//	                   ImageCollector.start(folderName, 10) ;
-//	                   return 1;
-//	                }  
-//	            });  
-//	    	  final String folderName=movieFolder.getAbsolutePath()+"/"+keyword_pinyin;
-//	    	  final String keyword_final=keyword_pinyin;
-//	    	  if(j==0) //first one we need to do this......
-//	    	  {
-//	    	  Callable<String> task=new Callable<String> ()
-//	          {
-//	    		  public String call()
-//	    		  {
-//	    			  
-//	    			  ImageCollector.start(folderName, 10) ;
-//	    			  return keyword_final;
-//	    			
-//	    		  }
-//	    	  };
-//	    	   ExecutorService executor = Executors.newCachedThreadPool();
-//		       Future<String> future = executor.submit(task);
-//		      
-//	    	  if( future.isDone())
-//	    	 {
-//	    		  keywordToDoMap.put(key, value)
-//	    		  get(future.get())
-//	    	 }
-//	    	  }
-//	    	  else
-//	    	  {
-//	    		  
-//	    	  }
-	    	  
-	    	
-	    	
-	    	 
 	    	  System.out.println("waiting for "+2*r+" min");
 	          Thread.sleep(1000*60*2*r);
 	      }
@@ -378,264 +234,8 @@ public class Grawler
 	    	  e.printStackTrace();
 	    	  
 	      }
-	    
-	      DeleteMoiveTask(movie_name);
-	      ci_list.add(movieFolder.getAbsolutePath()+"/"+keyword_pinyin);
 	  }
-			
-			return ci_list;
 
-	}
-	
-	private synchronized void DeleteMoiveTask(String movie_name)
-	{
-		movieNameList.remove(movie_name);
-		
-	}
-	
-
-	
-	
-	private boolean compare(String outputFileName, String lastFile) throws IOException 
-	
-	{
-		return true;
-		
-	}
-
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-//	public synchronized String getNextMovieName()
-//	{
-//		if(movieNameList.isEmpty())return null;
-//		else{
-//			String movieFile = movieNameList.get(0);
-//			return movieFile;
-//		}
-//	} 
-	
-	
-	
-	
-//	private synchronized void begin()
-//	{
-//		
-//			new Thread(new Runnable() 
-//			{
-////				@Override
-//				public void run() 
-//				{
-//					// TODO Auto-generated method stub
-//					while(true)
-//					{
-//						String fileurl = getNextMovieName();
-//						if(fileurl!=null)
-//						{
-//							SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-//							Date date = new Date();                               
-//							System.out.println(sf.format(date));   
-//							try {
-//								crawler_google_image_htmlFormat(sf.format(date),fileurl);
-//							} catch (IOException e) {
-//								// TODO Auto-generated catch block
-//								e.printStackTrace();
-//							}
-//							continue;
-//						}
-//						else{
-//							synchronized (signal) 
-//							{
-//								try{
-//									signal.wait();
-//								}catch(InterruptedException e)
-//								{
-//									e.printStackTrace();
-//									log.warn(Thread.currentThread().getName()+"\t"+e.getMessage());
-//								}
-//							}
-//						}
-//					}
-//					
-//				}
-//			}).start();
-//		}
-//	
-	
-	
-	
-//	public synchronized static void crawl() throws InterruptedException
-//	{
-//		PropertyConfigurator.configure("log4j.properties");
-//		
-//
-//		RSSCrawler crawler = new RSSCrawler();
-//		long start= System.currentTimeMillis(); 
-//		crawler.begin();
-//		
-//		
-//  
-//		
-////		  Callable<String> task=new Callable<String> ()
-////		          {
-////		    		  public String call() throws InterruptedException
-////		    		  {
-////		    			  System.out.println("wait for taks inside the queue");
-////		    			  Thread.sleep(1000*60*10);
-////						return null;
-////		    			
-////		    		  }
-////		    	  };
-////		    	   ExecutorService executor = Executors.newCachedThreadPool();
-////			       future= executor.submit(task);
-////			    	crawler.taskTrackQueue.add(crawler.taskQueue.get(0));
-////					System.out.println(crawler.taskQueue.get(0)+" finished");
-////					System.out.println(crawler.taskQueue.get(0)+" removed");
-////					crawler.taskQueue.remove(crawler.taskQueue.get(0));
-//		
-//		
-//		
-//		
-//		while(true)
-//		{
-//			if(crawler.taskQueue.isEmpty())
-//			{
-//				
-//				if( crawler.movieNameList.isEmpty())
-//				{
-//				long end= System.currentTimeMillis(); 
-//				log.info("总共耗时"+(end-start)/1000+"秒");
-//                System.out.println("总共耗时"+(end-start)/1000+"秒");  
-//                System.exit(1);
-//				}
-//			}
-//			else if(!crawler.taskQueue.isEmpty()&&!crawler.taskTrackQueue.contains(crawler.taskQueue.get(0)))
-//			{
-//				System.out.println("Doing image crawling for"+crawler.taskQueue.get(0));
-//
-//				final String taskToDo=crawler.taskQueue.get(0);
-//				
-//				if(future==null)
-//				{
-//					
-//					  Callable<String> task=new Callable<String> ()
-//			          {
-//			    		  public String call() throws InterruptedException
-//			    		  {
-//			    			  System.out.println("wait for taks inside the queue");
-//			    			  Thread.sleep(1000*60*10);
-//							return null;
-//			    			
-//			    		  }
-//			    	  };
-//			    	   ExecutorService executor = Executors.newCachedThreadPool();
-//				       future= executor.submit(task);
-//				       crawler.taskTrackQueue.add(crawler.taskQueue.get(0));
-//						System.out.println(crawler.taskQueue.get(0)+" finished");
-//						System.out.println(crawler.taskQueue.get(0)+" removed");
-//						crawler.taskQueue.remove(crawler.taskQueue.get(0));
-//					
-//					
-//				}
-//				else
-//				{
-//					
-//				}
-//				
-//					System.out.println(future);
-//					System.out.println("is done "+future.isDone());
-//					System.out.println("is cancelled"+future.isCancelled());
-//				
-////						  System.out.println("restart new thread");
-////						  task=new Callable<String> ()
-////						          {
-////						    		  public String call() throws InterruptedException
-////						    		  {
-//////						    			  System.out.println("this is a new thread");
-////						    			 
-////						    			  ImageCollector ic=new ImageCollector(taskToDo);
-////						  				  ic.start(3);
-////										return taskToDo;
-////						    			
-////						    		  }
-////						    	  };
-////						    	   executor = Executors.newCachedThreadPool();
-////							       future= executor.submit(task);
-////							    	crawler.taskTrackQueue.add(crawler.taskQueue.get(0));
-////									System.out.println(crawler.taskQueue.get(0)+" finished");
-////									System.out.println(crawler.taskQueue.get(0)+" removed");
-////									crawler.taskQueue.remove(crawler.taskQueue.get(0));
-//				  
-//			}
-//				
-//			}
-//		}
-//	
-//	
-//	
-
-
-
-
-
-//	public void crawl()
-//	{
-//		
-//		LinkedList<String> taskQueue=new LinkedList<String>();
-//		
-//		ArrayList<String> movieList=new ArrayList<String>();
-//		try
-//		{
-//			
-//		BufferedReader readerMovie=new BufferedReader(new FileReader("./movieList"));
-//		String movieName="";
-//	    while((movieName=readerMovie.readLine())!=null)
-//		{
-//			String s=movieName;
-//			movieList.add(s);
-//		}
-//					
-//		readerMovie.close();
-//		}
-//		catch(Exception e)
-//		{
-//			e.printStackTrace();
-//		}
-//		
-//		
-//		
-//		
-//		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-//		Date date = new Date();                               
-//		System.out.println(sf.format(date));    
-//		
-//		for(int i=0;i<movieList.size();i++)
-//		{
-//		try
-//		{
-//			Boolean movieGoogleSearch=crawler_google_image_htmlFormat(sf.format(date),movieList.get(i));
-//			if(movieGoogleSearch)
-//			{
-//				taskQueue.push(movieList.get(i));
-//			}
-//		}
-//		catch(Exception e)
-//		{
-//			e.printStackTrace();
-//		}
-//		}
-//	}
-	
-	
 	
 	public static void main(String[] args) 
 	{
@@ -651,7 +251,10 @@ public class Grawler
 
 //		  RSSCrawler.crawl();
 			
-
+              Grawler gcrawler=new Grawler();
+              String date="3-14";
+              String movieName="角色";
+		gcrawler.crawler_google_image_htmlFormat(date, movieName, "fashion.sina.com.cn",null);
 
 		   
 		}

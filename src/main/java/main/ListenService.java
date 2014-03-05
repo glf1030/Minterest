@@ -23,7 +23,7 @@ public class ListenService implements ServletContextListener
     public void contextInitialized(ServletContextEvent e)
     {        
     	
-    	System.out.println("Starting Auto Rideo Service...");
+    	System.out.println("Starting Tao Bao Auto Rideo Service...");
 
  
         if (null == messageListenerDeamon)

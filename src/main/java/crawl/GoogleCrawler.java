@@ -25,21 +25,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 
-
-
-
-
-
-
-
-
-
-
-
 public class GoogleCrawler 
 {
-	
-
 	
 	public static void main(String[] args)
 	{
@@ -134,7 +121,7 @@ class Producer implements Runnable
 			try
 			{
 				String movieName=movieList.poll();
-				ArrayList<String> movieGoogleSearch=crawler.crawler_google_image_htmlFormat(sf.format(date),movieName);
+				ArrayList<String> movieGoogleSearch=null;//crawler.crawler_google_image_htmlFormat(sf.format(date),movieName,movieId);
 				for(int j=0;j<movieGoogleSearch.size();j++)
 				{
 					System.out.println("I am putting "+ movieGoogleSearch.get(j));

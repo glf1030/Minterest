@@ -14,6 +14,8 @@ import java.util.Iterator;
 
 import javax.script.ScriptException;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -50,7 +52,7 @@ import entity.TaoBaoItem;
  * 
  */
 public class TaoBaoCrawler {
-
+	static Logger log = Logger.getLogger("task");
 	private static final int WEB_CLIENT_TIMEOUT = 1000*30;
 
 	/**
@@ -59,7 +61,7 @@ public class TaoBaoCrawler {
 	
 	TaoBaoKeyWordQueryFacotry kqf=new TaoBaoKeyWordQueryFacotry();
 	//GoogleKeyWordQueryFactory mqf=new GoogleKeyWordQueryFactory("./movieList");
-	MovieQueryFactory mqf=new MovieQueryFactory();
+	MovieQueryFactory mqf=new MovieQueryFactory("Taobao");
 	int number_pages=5;
 	int number_items=40;
 	String src="src";
@@ -67,9 +69,15 @@ public class TaoBaoCrawler {
 	MysqlDatabase msd=new MysqlDatabase();
 	String root="/mnt/nfs/nas179/rideo/";
 	String taobao="taobao";
-	//String winpath="/mnt/nfs/nas179/rideo/";
-	String winpath="D:/taobao/";
+	String winpath="/mnt/nfs/nas179/rideo/";
+	//String winpath="D:/taobao/";
 	String sourceType="Taobao";
+	
+	
+	public TaoBaoCrawler()
+	{
+		MovieQueryFactory mqf=new MovieQueryFactory("Taobao");
+	}
 	public static void main(String[] args) 
 	{
 	
@@ -97,23 +105,28 @@ new TaoBaoCrawler().crawl();
 	
 	public void crawl()
 	{
+		PropertyConfigurator.configure("log4j.properties");
+		
 		String query_prefix="http://s.taobao.com/search?js=1&q=";
 		String query_postfix="&s=";
 		
 		
 		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-		Date date = new Date();                               
+		Date date = new Date(); 
+		log.info(sf.format(date));
 		System.out.println(sf.format(date));  
 		
-		HashMap<String,String> movie_nameID=mqf.getQuery();
+		HashMap<String,String> movie_nameID=mqf.getTaobaoQuery();
 		Iterator<String> iter=movie_nameID.keySet().iterator();
 		ArrayList<String> movie_name_list=new ArrayList<String>();
 		while(iter.hasNext())
 			movie_name_list.add(iter.next().toString());
 //		ArrayList<String> movie_name_list=mqf.getQuery();
 		for(int i=0;i<movie_name_list.size();i++)
+		{
 			System.out.println(movie_name_list.get(i));
-		
+			log.info(movie_name_list.get(i));
+		}
 		for(String m:movie_name_list)
 		{
 			String movie_name=m;
@@ -126,7 +139,7 @@ new TaoBaoCrawler().crawl();
 				for(int i=0;i<number_pages;i++)
 				{
 					String query=query_prefix+URLEncoding.encode(movie_name+" "+q)+query_postfix+i*number_items;
-
+					log.info(query);
 					System.out.println(query);
 					ArrayList<RideoItem> tbiL=new ArrayList<RideoItem>();
 					
@@ -138,9 +151,12 @@ new TaoBaoCrawler().crawl();
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
 					
-                    System.out.println(tbiL.size());
+                 
 					String outpath=root+FileName2Pinyin.convertHanzi2PinyinStr(m)+"/"+taobao+"/"+FileName2Pinyin.convertHanzi2PinyinStr
 							(q)+"/"+sf.format(date)+"/";
 					
@@ -166,17 +182,18 @@ new TaoBaoCrawler().crawl();
 					}
 					if(exist)
 					{
+						log.info("exist! "+q);
 						System.out.println("exist! ");
 					break;
 					}
 					else
 					{
+						log.info("not exist! or does not have pages "+q);
 						System.out.println("not exist! or does not have pages");
 					continue;
 					}
 				}
 			}
-		
 		}
 		
 		
@@ -185,14 +202,14 @@ new TaoBaoCrawler().crawl();
 
 	}
 	
-	public ArrayList<RideoItem> crawl(String query, String movie_Name, String movie_id,String keywords) throws MalformedURLException, IOException
+	public ArrayList<RideoItem> crawl(String query, String movie_Name, String movie_id,String keywords) throws MalformedURLException, IOException, InterruptedException
 	{
 
 				try {
 					ArrayList<RideoItem> list=crawlWithQuery(query,movie_Name,movie_id,keywords);
 					return list;
 				} catch (FailingHttpStatusCodeException e) {
-					// TODO Auto-generated catch block
+					Thread.sleep(1000*60*10);
 					e.printStackTrace();
 					return null;
 				}
@@ -202,7 +219,7 @@ new TaoBaoCrawler().crawl();
 	
 	
 
-	public ArrayList<RideoItem> crawlWithQuery(String query, String movie_name,String movie_id,String keywords) throws FailingHttpStatusCodeException, MalformedURLException, IOException 
+	public ArrayList<RideoItem> crawlWithQuery(String query, String movie_name,String movie_id,String keywords) throws FailingHttpStatusCodeException, MalformedURLException, IOException, InterruptedException 
 	{
 		
 		
@@ -245,9 +262,11 @@ new TaoBaoCrawler().crawl();
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		} catch (FailingHttpStatusCodeException e1) {
+		} catch (FailingHttpStatusCodeException e1) 
+		{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			Thread.sleep(1000*60);
 		} 
 		    if(image_url!=null)
 		    	

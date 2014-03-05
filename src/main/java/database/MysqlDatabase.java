@@ -121,13 +121,13 @@ public class MysqlDatabase {
 	}
 
 	
-	public ArrayList<MovieItem> batchsearchMovieDataFromMysql()
+	public ArrayList<MovieItem> batchsearchTaobaoMovieDataFromMysql()
 	{
 		ArrayList<MovieItem> miList=new ArrayList<MovieItem>();
 		
 		 try
 		 {
-			 String sql="select * from ContentDiary.movie";
+			 String sql="select * from ContentDiary.movie where taobao_search=1";
 			 PreparedStatement stmt = conn.clientPrepareStatement(sql);
 		
 			  ResultSet rs = stmt .executeQuery(sql);
@@ -136,10 +136,13 @@ public class MysqlDatabase {
 			  { 
 			   
 			   MovieItem mi=new MovieItem();
-			   mi.set_movie_name(rs.getString("movie_name"));
+			   String movie_name=rs.getString("movie_name");
+			   movie_name= movie_name.substring(0,movie_name.indexOf("("));
+			   mi.set_movie_name(movie_name);
 			   mi.set_movie_id(rs.getString("movie_id"));
 			   mi.set_director(rs.getString("director"));
 			   mi.set_actor_list((rs.getString("actor_list").split(";")));
+			   
 			   miList.add(mi);
 			  }
 		 }
@@ -148,10 +151,15 @@ public class MysqlDatabase {
 			 e.printStackTrace();
 		 }
 		 
+		 System.out.println(miList.size());
 		
 		return miList;
 	}
 
+	
+
+	
+	
 	
 
 
@@ -204,6 +212,8 @@ public class MysqlDatabase {
 					existed=true;
 				}
 	    	 
+				if(!existed)
+				{
 		    PreparedStatement stat=null;
 		
 			stat = conn.clientPrepareStatement("INSERT INTO Minterest.Rideo_Initial VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -228,7 +238,7 @@ public class MysqlDatabase {
 
 			stat.execute();
 			
-		
+				}
 
 	    }
 	 
@@ -255,12 +265,70 @@ public class MysqlDatabase {
 		 * test by lg
 		 */
 		MysqlDatabase mdb=new MysqlDatabase();
-		ArrayList<MovieItem> miList=mdb.batchsearchMovieDataFromMysql();
+		ArrayList<MovieItem> miList=mdb.batchsearchTaobaoMovieDataFromMysql();
 		for(MovieItem mi:miList)
 		{
-			for(String s:mi.get_actor_list())
-				System.out.println(s);
+//			for(String s:mi.get_actor_list())
+//				System.out.println(s);
+			System.out.println(mi.get_movie_name());
 			
 		}
+	}
+
+
+	public ArrayList<String> batchsearchWebsitesFromMysql() 
+	{
+ArrayList<String> fashionLinks=new ArrayList<String>();
+		
+		String sql="SELECT * FROM Minterest.FashionLink";
+		 PreparedStatement stmt;
+		try {
+			stmt = conn.clientPrepareStatement(sql);
+			ResultSet rs = stmt .executeQuery(sql);
+			while(rs.next())
+			{
+				fashionLinks.add(rs.getString("link"));
+				
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+		 return fashionLinks;
+	}
+
+
+	public ArrayList<MovieItem> batchsearchGoogleImageMovieDataFromMysql() {
+		ArrayList<MovieItem> miList=new ArrayList<MovieItem>();
+		
+		 try
+		 {
+			 String sql="select * from ContentDiary.movie where google_isearch=1";
+			 PreparedStatement stmt = conn.clientPrepareStatement(sql);
+		
+			  ResultSet rs = stmt .executeQuery(sql);
+			  
+			  while(rs.next())
+			  { 
+			   
+			   MovieItem mi=new MovieItem();
+			   String movie_name=rs.getString("movie_name");
+			   movie_name= movie_name.substring(0,movie_name.indexOf("("));
+			   mi.set_movie_name(movie_name);
+			   mi.set_movie_id(rs.getString("movie_id"));
+			   mi.set_director(rs.getString("director"));
+			   mi.set_actor_list((rs.getString("actor_list").split(";")));
+			   
+			   miList.add(mi);
+			  }
+		 }
+		 catch(Exception e)
+		 {
+			 e.printStackTrace();
+		 }
+		 
+		
+		return miList;
 	}
 }

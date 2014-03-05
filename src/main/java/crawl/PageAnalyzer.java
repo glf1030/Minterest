@@ -1,8 +1,11 @@
 package crawl;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 
@@ -10,6 +13,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.lionsoul.jcseg.test.JcsegTest;
+
+import com.gargoylesoftware.htmlunit.AjaxController;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.ThreadedRefreshHandler;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import entity.GoogleImageItem;
 
@@ -39,17 +49,28 @@ public class PageAnalyzer
 	 */
 	public static void main(String[] args) 
 	{
-		String[] query=new String[]{"小时代","皮草"};
-		String in="D:\\TCLFiles\\WeiboNews\\Social Magazine\\xiaoshidai\\女装49.html";
-		new PageAnalyzer().analyzer(query,in);
+		String[] query={"北京遇上西雅图","汤唯"};
+		String in="http://fashion.ifeng.com/beauty/hair/detail_2014_02/07/33576592_0.shtml";
+		try {
+			System.out.println(new PageAnalyzer().analyze_page(query,in));
+		} catch (FailingHttpStatusCodeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	
-	public  double analyzer(String[] query,String htmlFile)
+	public  double analyzer(String query,String htmlFile)
 	{
 		try
 		{
-			JcsegTest test=new JcsegTest();
+			
 			ArrayList<GoogleImageItem> itemList=new ArrayList<GoogleImageItem>();
 			
 			Document doc = Jsoup.parse(new File(htmlFile), "UTF-8");
@@ -86,21 +107,19 @@ public class PageAnalyzer
 			double score=0.0;
 			for(int i=0;i<itemList.size();i++)
 			{
-				System.out.println(itemList.get(i).get_short_text().trim());
-				String[] strC=test.segment(itemList.get(i).get_short_text()).trim().split(" ");
+				//System.out.println(itemList.get(i).get_short_text().trim());
+				//String[] strC=test.segment(itemList.get(i).get_short_text()).trim().split(" ");
 				//System.out.println(strC);
 				
 				//System.out.println(score);
 				
-				if(!itemList.get(i).get_short_text().contains(query[0]))
-					score=score+0;
-				else
-				score=score+caculateSim(query,strC);
+				if(itemList.get(i).get_short_text().trim().contains(query))
+					score=score+1.0;
 			}
 			
 			
 	//System.out.println("score:"+score/20);
-	return score/20;
+	return score/itemList.size();
 		}
 		
 		/*
@@ -121,6 +140,25 @@ public class PageAnalyzer
 		
 		
 	}
+
+	
+	
+	public double analyze_page(String[] query, String url) throws FailingHttpStatusCodeException, MalformedURLException, IOException
+	{
+		WebClient webClient = new WebClient();
+		webClient.setJavaScriptEnabled(false);
+    	webClient.setCssEnabled(false);
+    	webClient.setTimeout(60000);
+    	webClient.setRefreshHandler(new ThreadedRefreshHandler());
+    	webClient.setAjaxController(new AjaxController());
+    	HtmlPage htmlPage=null;
+		htmlPage = webClient.getPage(url);
+		List<HtmlAnchor> ha=htmlPage.getAnchors();
+		for(int i=0;i<ha.size();i++)
+		System.out.println(ha.get(i).asXml());
+		return 0.0;
+	}
+	
 	
 	public void close()
 	{
