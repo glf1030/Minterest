@@ -36,6 +36,7 @@ public class ImageCollectorUtils {
 			URLConnection conn = url.openConnection();
 			System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(Parameters.URL_CONNECT_TIMEOUT));  
 			System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(Parameters.URL_READ_TIMEOUT));  
+			LOG.info("connect timeout="+conn.getConnectTimeout()+"\tread timeout="+conn.getReadTimeout());
 			InputStream in = conn.getInputStream();
 			return in;
 		}catch(MalformedURLException e){

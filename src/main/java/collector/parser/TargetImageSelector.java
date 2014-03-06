@@ -100,7 +100,7 @@ public class TargetImageSelector {
 	}
 	
 	private static WebImageObject getTargetImage(String queryurlstr, ArrayList<WebImageObject> targetImageObjs){
-		
+		LOG.info(Thread.currentThread().getName()+"\tStart to calculate the image similarity...");
 		Map<WebImageObject,Integer> map = new HashMap<WebImageObject,Integer>();
 		Map<WebImageObject,Integer> mapSorted = new TreeMap<WebImageObject,Integer>();
 		
@@ -147,6 +147,7 @@ public class TargetImageSelector {
 				targetImg = ImageUtilities.createMBFImage(bImg, false);
 				targetKeypoints = engine.findFeatures(targetImg.flatten());	
 				in.close();
+				
 			} catch (IOException e) {
 				WARN.warn(Thread.currentThread().getName()+"\t"+e.getMessage());
 				continue;
@@ -179,6 +180,7 @@ public class TargetImageSelector {
 			return returnObj;
 		}
 		else{
+			LOG.info(Thread.currentThread().getName()+"\tNo image found, maybe caused by image size too small...");
 			return null;
 		}
 	
