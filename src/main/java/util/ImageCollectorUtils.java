@@ -34,10 +34,13 @@ public class ImageCollectorUtils {
 		try{
 			URL url = new URL(urlStr);
 			URLConnection conn = url.openConnection();
-			System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(Parameters.URL_CONNECT_TIMEOUT));  
-			System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(Parameters.URL_READ_TIMEOUT));  
-			LOG.info("connect timeout="+conn.getConnectTimeout()+"\tread timeout="+conn.getReadTimeout());
+//			System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(Parameters.URL_CONNECT_TIMEOUT));  
+//			System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(Parameters.URL_READ_TIMEOUT));  \
+			
+			conn.setConnectTimeout(Parameters.URL_CONNECT_TIMEOUT);
+			conn.setReadTimeout(Parameters.URL_READ_TIMEOUT);
 			InputStream in = conn.getInputStream();
+			
 			return in;
 		}catch(MalformedURLException e){
 			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tif no URL can be created from the provided string URL="+urlStr);

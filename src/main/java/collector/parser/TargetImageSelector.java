@@ -56,7 +56,7 @@ public class TargetImageSelector {
 	
 	public TargetImageSelector(GoogleHtmlObject gobj, ArrayList<WebImageObject> imgObjs, MovieItem movieItem) {
 		
-		LOG.warn(Thread.currentThread().getName()+"\tStart to find target image...");
+		LOG.warn(Thread.currentThread().getName()+"\tStart to find target image..."+imgObjs.size());
 		if(imgObjs==null || imgObjs.size()==0){
 			LOG.warn("No image crawled from the source page..."+gobj.webUrl);
 			return;
@@ -100,7 +100,7 @@ public class TargetImageSelector {
 	}
 	
 	private static WebImageObject getTargetImage(String queryurlstr, ArrayList<WebImageObject> targetImageObjs){
-		LOG.info(Thread.currentThread().getName()+"\tStart to calculate the image similarity...");
+		LOG.info(Thread.currentThread().getName()+"\tStart to calculate the image similarity..."+targetImageObjs.size());
 		Map<WebImageObject,Integer> map = new HashMap<WebImageObject,Integer>();
 		Map<WebImageObject,Integer> mapSorted = new TreeMap<WebImageObject,Integer>();
 		
@@ -129,13 +129,18 @@ public class TargetImageSelector {
 		for(WebImageObject targetImageObj:targetImageObjs){
 			MBFImage targetImg;
 			try {
+				long startTIme = System.currentTimeMillis();
 				InputStream in = ImageCollectorUtils.getInputStreamFromURL(targetImageObj.url);
-				if(in==null)continue;
+				if(in==null){
+					LOG.info("Empty inputstream, maybe read time out....");
+					continue;
+				}
 				BufferedImage bImg = ImageIO.read(in);
 				if(bImg==null)continue;
 				int width = bImg.getWidth();
 				int height = bImg.getHeight();
 				if(width<Parameters.WIDTH || height<Parameters.HEIGHT){
+					LOG.info("Image size too small...");
 					continue;
 				}
 				targetImageObj.width = width;
@@ -147,6 +152,9 @@ public class TargetImageSelector {
 				targetImg = ImageUtilities.createMBFImage(bImg, false);
 				targetKeypoints = engine.findFeatures(targetImg.flatten());	
 				in.close();
+				long endTIme = System.currentTimeMillis();
+				LOG.info("Read image time:"+(endTIme-startTIme)/1000+" secs\t"+targetImageObj.url);
+				
 				
 			} catch (IOException e) {
 				WARN.warn(Thread.currentThread().getName()+"\t"+e.getMessage());
