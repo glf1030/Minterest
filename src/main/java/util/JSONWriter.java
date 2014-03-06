@@ -2,7 +2,7 @@ package util;
 
 import java.util.ArrayList;
 
-import crawl.ImageCollector.ExternalImage;
+import crawl.ImageCollectorOld.ExternalImage;
 
 
 import net.sf.json.JSONArray;

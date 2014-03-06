@@ -27,7 +27,7 @@ public class RideoItemConstructor {
 	}
 	
 	public RideoItemConstructor(TargetImageSelector targetImage,String movie_id,String keyword) {
-		LOG.info("Start to build RideoObject...");
+		LOG.info(Thread.currentThread().getName()+"\tStart to build RideoObject...");
 		if(targetImage==null||targetImage.googleObject==null||targetImage.webImageObject==null){
 			LOG.info("TargetImageObject is null!");
 			return;
@@ -36,12 +36,18 @@ public class RideoItemConstructor {
 		GoogleHtmlObject googleObj = targetImage.googleObject;
 		WebImageObject imageObject = targetImage.webImageObject;
 		
+		String description;
+		if(imageObject.alt!=null && !imageObject.alt.equals(""))description = imageObject.alt;
+		else{
+			description = imageObject.text;
+		}
+		
 		dbObject = new RideoItem();
 		
 		dbObject.setMId(movie_id);
 		dbObject.setPId(MD5Generator.execute(imageObject.url));
 		dbObject.setPUrl(imageObject.url);
-		dbObject.setDes(imageObject.text);
+		dbObject.setDes(description);
 		dbObject.setSourceLink(googleObj.webUrl);
 		dbObject.setLocalAdd(imageObject.addr);
 		dbObject.setSourceType("Google");
@@ -57,7 +63,7 @@ public class RideoItemConstructor {
 		Date date = new Date();
 		dbObject.setDate(sf.format(date));
 		dbObject.setKeyword(keyword);
-		LOG.info("Finish to build RideoObject...");
+		LOG.info(Thread.currentThread().getName()+"Finish to build RideoObject...");
 	}
 
 }

@@ -71,7 +71,7 @@ public class WebPageParser {
 		HtmlPage htmlPage = null;
 		long startTime = System.currentTimeMillis();
 		try {
-			LOG.info("TIMEOUT:"+webClient.getOptions().getTimeout());
+//			LOG.info("TIMEOUT:"+webClient.getOptions().getTimeout());
 			htmlPage = webClient.getPage(webUrl);
 		} catch (FailingHttpStatusCodeException e) {
 			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tthe server returns a failing status code URL="+webUrl);

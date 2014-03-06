@@ -341,7 +341,7 @@ class Test1
 	{
 		taskLog.info(fileName+"is working");
 		System.out.println(fileName+"is working");
-		   ImageCollector ic=new ImageCollector();
+		   ImageCollectorOld ic=new ImageCollectorOld();
 		   ic.singleStart(fileName);
 		Thread.sleep(1000*60*10);
 		taskLog.info(fileName+" has finished");

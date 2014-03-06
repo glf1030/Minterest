@@ -64,7 +64,6 @@ public class SingleThreadCollector {
 					
 					if(isSuccess)storageManager.save2Local();
 					
-					
 				}
 			}
 			

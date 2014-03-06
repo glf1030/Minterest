@@ -28,40 +28,40 @@ public class ImageStorageManager {
 	public ImageStorageManager(RideoItem item) {
 		// TODO Auto-generated constructor stub
 		if(item==null){
-			LOG.info("input rideoItem is null");
+			LOG.info(Thread.currentThread().getName()+"\tInput rideoItem is null");
 			return;
 		}
 		this.rideoItem = item;
 		if(this.rideoItem==null){
-			LOG.info("rideoItem is null");
+			LOG.info(Thread.currentThread().getName()+"\trideoItem is null");
 		}
 	}
 	public boolean save2Mysql(){
 		if(this.rideoItem==null){
-			LOG.info("No RideoItem received by storage manager...");
+			LOG.info(Thread.currentThread().getName()+"\tNo RideoItem received by storage manager...");
 			return false;
 		}
 		MysqlDatabase conn = new MysqlDatabase();
 		try {
-			LOG.info("Start to save rideoItem to db...");
+			LOG.info(Thread.currentThread().getName()+"\tStart to save rideoItem to db...");
 			conn.insertRideoItemRecord(rideoItem);
 			
-			LOG.info("Finish to save rideoItem to db...");
+			LOG.info(Thread.currentThread().getName()+"\tFinish to save rideoItem to db...");
 		}catch(MySQLIntegrityConstraintViolationException e){
-			LOG.info(rideoItem.getPUrl()+" has been input into the database....");
+			LOG.info(Thread.currentThread().getName()+rideoItem.getPUrl()+" has been input into the database....");
 			return false;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
-			LOG.warn("Fail to saved to Mysql...");
+			LOG.warn(Thread.currentThread().getName()+"\tFail to saved to Mysql...");
 			e.printStackTrace();
 			return false;
 		}
-		LOG.info("Saved to Mysql...");
+		LOG.info(Thread.currentThread().getName()+"\tSaved to Mysql...");
 		return true;
 	}
 	public boolean save2Local(){
 		if(this.rideoItem==null){
-			LOG.info("No RideoItem received by storage manager...");
+			LOG.info(Thread.currentThread().getName()+"\tNo RideoItem received by storage manager...");
 			return false;
 		}
 		String url = this.rideoItem.getPUrl();

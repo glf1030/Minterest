@@ -139,7 +139,7 @@ public class GoogleHtmlParser {
 			else {
 				String hostname = url.getHost();
 				if(b_links.contains(hostname)){
-					LOG.info("Site is on the blocking list:"+hostname);
+					LOG.info(Thread.currentThread().getName()+"Site is on the blocking list:"+hostname);
 					continue;
 				}
 				else{

@@ -43,7 +43,8 @@ public class MysqlDatabase {
 		{
 			
 			conn = (Connection) DriverManager.getConnection("jdbc:mysql://192.168.1.55:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
-		
+//			conn = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
+			
 		//	conn = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/ContentDiary?useUnicode=true&characterEncoding=UTF-8","root","111111");
 			
 			
@@ -250,8 +251,7 @@ public class MysqlDatabase {
 		stat.setString(16, rideoItem.getIssues());
 		stat.setString(17, rideoItem.getDate());
 		stat.setString(18, rideoItem.getKeyword());
-		taskLog.info("LocalAdd:"+rideoItem.getLocalAdd());
-		taskLog.info("insert sql:"+stat.toString());
+//		taskLog.info(Thread.currentThread().getName()+"\tInsert sql:"+stat.toString());
 		stat.execute();
 		
 		return existed;

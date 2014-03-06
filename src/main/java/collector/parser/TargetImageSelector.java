@@ -58,7 +58,7 @@ public class TargetImageSelector {
 		
 		LOG.warn(Thread.currentThread().getName()+"\tStart to find target image..."+imgObjs.size());
 		if(imgObjs==null || imgObjs.size()==0){
-			LOG.warn("No image crawled from the source page..."+gobj.webUrl);
+			LOG.warn(Thread.currentThread().getName()+"\tNo image crawled from the source page..."+gobj.webUrl);
 			return;
 		}
 		// validation
@@ -72,7 +72,7 @@ public class TargetImageSelector {
 		WebImageObject targeObj = getTargetImage(queryUrlStr, imgObjs);
 		
 		if (targeObj == null) {
-			LOG.warn("No image found by image matching program...Maybe caused by small image size, or ioexception");
+			LOG.warn(Thread.currentThread().getName()+"\tNo image found by image matching program...Maybe caused by small image size, or ioexception");
 			return;
 		}
 
@@ -94,7 +94,7 @@ public class TargetImageSelector {
 			File[] images = rootDir.listFiles();
 			int index = images.length;
 			this.webImageObject.addr = rootDir+"/"+String.valueOf(index)+"."+ImageCollectorUtils.getURLExtension(webImageObject.url);
-			LOG.info(this.webImageObject.addr);
+			LOG.info(Thread.currentThread().getName()+"\t"+this.webImageObject.addr);
 		}
 		
 	}
@@ -132,7 +132,7 @@ public class TargetImageSelector {
 				long startTIme = System.currentTimeMillis();
 				InputStream in = ImageCollectorUtils.getInputStreamFromURL(targetImageObj.url);
 				if(in==null){
-					LOG.info("Empty inputstream, maybe read time out....");
+					LOG.info(Thread.currentThread().getName()+"\tEmpty inputstream, maybe read time out....");
 					continue;
 				}
 				BufferedImage bImg = ImageIO.read(in);
@@ -140,7 +140,7 @@ public class TargetImageSelector {
 				int width = bImg.getWidth();
 				int height = bImg.getHeight();
 				if(width<Parameters.WIDTH || height<Parameters.HEIGHT){
-					LOG.info("Image size too small...");
+					LOG.info(Thread.currentThread().getName()+"\tImage size too small...");
 					continue;
 				}
 				targetImageObj.width = width;
@@ -153,7 +153,7 @@ public class TargetImageSelector {
 				targetKeypoints = engine.findFeatures(targetImg.flatten());	
 				in.close();
 				long endTIme = System.currentTimeMillis();
-				LOG.info("Read image time:"+(endTIme-startTIme)/1000+" secs\t"+targetImageObj.url);
+				LOG.info(Thread.currentThread().getName()+"\tRead image time:"+(endTIme-startTIme)/1000+" secs\t"+targetImageObj.url);
 				
 				
 			} catch (IOException e) {
@@ -184,7 +184,7 @@ public class TargetImageSelector {
 		}
 		if(mapSorted.size()>0){
 			WebImageObject returnObj = mapSorted.entrySet().iterator().next().getKey();
-			LOG.info("Found image:"+returnObj.url);
+			LOG.info(Thread.currentThread().getName()+"\tFound image:"+returnObj.url);
 			return returnObj;
 		}
 		else{
@@ -225,21 +225,21 @@ public class TargetImageSelector {
 		String[] actorList = movieItem.get_actor_list();
 		
 		if(movieName.equals("") || director==null || actorList==null ){
-			LOG.info("Imcomplete MovieItem...");
+			LOG.info(Thread.currentThread().getName()+"\tImcomplete MovieItem...");
 			return false;
 		}
 		if(title==null){
-			LOG.info("Title from source webpage is empty");
+			LOG.info(Thread.currentThread().getName()+"\tTitle from source webpage is empty");
 			return false;
 		}
 		if(summary==null){
-			LOG.info("Summary from google image is empty");
+			LOG.info(Thread.currentThread().getName()+"\tSummary from google image is empty");
 			return false;
 		}
 		StringBuffer movieInfo = new StringBuffer(movieName);
 		//Title contains movie name
 		if(title.contains(movieName)){
-			LOG.info("Title contains movie name...");
+			LOG.info(Thread.currentThread().getName()+"\tTitle contains movie name...");
 			isValid=true;
 			return isValid;
 		}
@@ -255,10 +255,10 @@ public class TargetImageSelector {
 			casts.add(cast);
 			movieInfo.append(cast);
 		}
-		LOG.info("movieName:"+movieName+"\tcasts:"+Arrays.toString(casts.toArray(new String[casts.size()])));
+		LOG.info(Thread.currentThread().getName()+"\tmovieName:"+movieName+"\tcasts:"+Arrays.toString(casts.toArray(new String[casts.size()])));
 		for(String cast:casts){
 			if(title.contains(cast)){
-				LOG.info("Title contains cast name...:"+cast);
+				LOG.info(Thread.currentThread().getName()+"\tTitle contains cast name...:"+cast);
 				isValid = true;
 				return isValid;
 			}
@@ -267,7 +267,7 @@ public class TargetImageSelector {
 		//otherwise, look at the google summary
 		int matchCount = countMatch(summary, movieInfo.toString());
 		if(matchCount > 0){
-			LOG.info("summary contains movie info...count:"+matchCount);
+			LOG.info(Thread.currentThread().getName()+"\tsummary contains movie info...count:"+matchCount);
 			return true;
 		}
 		else return false;
