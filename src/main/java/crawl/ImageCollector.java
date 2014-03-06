@@ -26,6 +26,11 @@ public class ImageCollector {
 		SingleThreadCollector.start(itemPath,movieItem);
 	}
 	
+	/**
+	 * Multiple thread, faster than single one, Thread number set in util.Parameters
+	 * @param itemPath
+	 * @param movieItem
+	 */
 	public static void multipleStart(String itemPath, MovieItem movieItem){
 		MultipleThreadCollector.start(itemPath,movieItem);
 	}

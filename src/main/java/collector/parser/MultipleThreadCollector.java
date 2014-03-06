@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -40,7 +42,9 @@ public class MultipleThreadCollector {
 			else if(!html.getName().endsWith("htm")&&(!html.getName().endsWith("html")))continue;
 			else{
 				long startTime = System.currentTimeMillis();
-				ExecutorService executor = Executors.newFixedThreadPool(Parameters.THREAD_NUM);
+//				ExecutorService executor = Executors.newFixedThreadPool(Parameters.THREAD_NUM);
+				ExecutorService executor = new ThreadPoolExecutor(Parameters.THREAD_NUM, 20, 60*1000, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());    
+
 				String htmlPath = html.getAbsolutePath();
 				ArrayList<GoogleHtmlObject> googleHtmlObjects = GoogleHtmlParser.getGoogleHtmlItems(htmlPath);
 				for(GoogleHtmlObject googleHtmlObj:googleHtmlObjects){

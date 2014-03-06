@@ -38,6 +38,7 @@ import entity.MovieItem;
 import entity.WebImageObject;
 import util.ImageCollectorUtils;
 import util.Parameters;
+import util.Stopwords;
 
 /**
  * Find the target image from image urls in source webpage
@@ -64,7 +65,7 @@ public class TargetImageSelector {
 		// validation
 		String summary = gobj.summary;
 		String title = imgObjs.get(0).title;
-		if (!isValidItem(movieItem, title, summary))
+		if (!isRelevantItem(movieItem, title, summary))
 			return;
 
 		// if valid, continue to build targetObject
@@ -217,8 +218,17 @@ public class TargetImageSelector {
 		
 	}
 	
-	//Judge if the google item is valid for crawl
-	public static boolean  isValidItem(MovieItem movieItem,String title, String summary){
+	/**
+	 * Judge if the google item is valid for crawl
+	 * If the webpage title don't contains shows' name, cast name or director name && 
+	 * google snapple do not similar to the movie info
+	 * Then, the google item is irrelevant
+	 * @param movieItem
+	 * @param title
+	 * @param summary
+	 * @return
+	 */
+	public static boolean  isRelevantItem(MovieItem movieItem,String title, String summary){
 		boolean isValid = false;
 		String movieName = movieItem.get_movie_name();
 		String director = movieItem.get_director();
@@ -279,12 +289,14 @@ public class TargetImageSelector {
 		if(summary.equals("")||title.equals(""))return 0;
 		
 		int count = 0;
+		HashSet<Character> stoplist = Stopwords.getStoplist();
 		HashSet<Character> summarySet = new HashSet<>();
 		char[] titleArr = title.toCharArray();
 		char[] summaryArr = summary.toCharArray();
 		
 		for(char c:summaryArr){
 			if(!ImageCollectorUtils.isHanZi(c))continue;
+			if(stoplist.contains(c))continue;
 			summarySet.add(c);
 		}
 		
@@ -306,15 +318,15 @@ public class TargetImageSelector {
 		
 		
 		MovieItem movieItem = new MovieItem();
-		movieItem.set_movie_name("辣妈正传");
+		movieItem.set_movie_name("最美的时光");
 		movieItem.set_movie_id("xxxxxxxx");
 		movieItem.set_director("");
 		movieItem.set_actor_list(new String[]{"孙俪"});
 		
 		String summary = "44372_804249_672559.jpg";
-		String title = "明星产后瘦身Style 领衔变辣妈";
+		String title = "明星的产后瘦身Style 领衔变辣妈";
 //		System.out.println(TargetImageSelector.countMatch(summary, title));
-		System.out.println(TargetImageSelector.isValidItem(movieItem, title, summary));
+		System.out.println(TargetImageSelector.isRelevantItem(movieItem, title, summary));
 	}
 	
 	
