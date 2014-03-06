@@ -4,9 +4,7 @@ package database;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -15,7 +13,11 @@ import org.apache.log4j.Logger;
 
 
 
+
+
+import com.esotericsoftware.minlog.Log;
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
 import entity.GoogleImageItem;
 import entity.MovieItem;
@@ -185,7 +187,76 @@ public class MysqlDatabase {
 		 return taobaoKeywords;
 		
 	}
+	/**
+	 * @return
+	 */
+	public ArrayList<String> getBlockingSites(){
+		ArrayList<String> b_links = new ArrayList<String>();
 
+		String sql = "SELECT * FROM Minterest.BlockLink";
+		PreparedStatement stmt;
+		try {
+			stmt = conn.clientPrepareStatement(sql);
+			ResultSet rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				b_links.add(rs.getString("b_link"));
+
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return b_links;
+	}
+
+	
+	public Boolean insertRideoItemRecord(RideoItem rideoItem)
+			throws MySQLIntegrityConstraintViolationException,SQLException {
+
+		Boolean existed = false;
+
+		String pid = rideoItem.getPID();
+
+		String sql = "select * from Minterest.Rideo_GoogleImage where p_id='" + pid
+				+ "'";
+		PreparedStatement stmt;
+		stmt = conn.clientPrepareStatement(sql);
+		ResultSet rs = stmt.executeQuery(sql);
+		while (rs.next()) {
+
+			existed = true;
+		}
+
+		PreparedStatement stat = null;
+
+		stat = conn
+				.clientPrepareStatement("INSERT INTO Minterest.Rideo_GoogleImage VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		stat.setInt(1, 0);
+		stat.setString(2, rideoItem.getPID());
+		stat.setString(3, rideoItem.getMID());
+		stat.setString(4, rideoItem.getPUrl());
+		stat.setString(5, rideoItem.getDes());
+		stat.setString(6, rideoItem.getSourceLink());
+		stat.setString(7, rideoItem.getLocalAdd());
+		stat.setString(8, rideoItem.getTitle());
+		stat.setString(9, rideoItem.getSourceType());
+		stat.setString(10, rideoItem.getIsExternal());
+		stat.setString(11, rideoItem.getIsInteresting());
+		stat.setInt(12, rideoItem.getGroupNum());
+		stat.setString(13, rideoItem.getTags());
+		stat.setDouble(14, rideoItem.getWidths());
+		stat.setDouble(15, rideoItem.getHeights());
+		stat.setString(16, rideoItem.getIssues());
+		stat.setString(17, rideoItem.getDate());
+		stat.setString(18, rideoItem.getKeyword());
+		taskLog.info("LocalAdd:"+rideoItem.getLocalAdd());
+		taskLog.info("insert sql:"+stat.toString());
+		stat.execute();
+		
+		return existed;
+
+	}
 	/*
 	 * true: 插入的数据，数据库里面并不存在
 	 * false: 插入的数据，数据库里面有。

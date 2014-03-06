@@ -146,9 +146,9 @@ public class PageAnalyzer
 	public double analyze_page(String[] query, String url) throws FailingHttpStatusCodeException, MalformedURLException, IOException
 	{
 		WebClient webClient = new WebClient();
-		webClient.setJavaScriptEnabled(false);
-    	webClient.setCssEnabled(false);
-    	webClient.setTimeout(60000);
+		webClient.getOptions().setJavaScriptEnabled(false);
+    	webClient.getOptions().setCssEnabled(false);
+    	webClient.getOptions().setTimeout(60000);
     	webClient.setRefreshHandler(new ThreadedRefreshHandler());
     	webClient.setAjaxController(new AjaxController());
     	HtmlPage htmlPage=null;

@@ -132,9 +132,9 @@ public class Grawler
 				String first_urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
 				
 				WebClient webClient = new WebClient();
-				webClient.setJavaScriptEnabled(false);
-		    	webClient.setCssEnabled(false);
-		    	webClient.setTimeout(60000);
+				webClient.getOptions().setJavaScriptEnabled(false);
+		    	webClient.getOptions().setCssEnabled(false);
+		    	webClient.getOptions().setTimeout(60000);
 		    	webClient.setRefreshHandler(new ThreadedRefreshHandler());
 		    	webClient.setAjaxController(new AjaxController());
 		    	HtmlPage first_htmlPage=null;
@@ -154,9 +154,9 @@ public class Grawler
 			  first_urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
 				System.out.println(first_urlStr);
 				webClient = new WebClient();
-				webClient.setJavaScriptEnabled(false);
-		    	webClient.setCssEnabled(false);
-		    	webClient.setTimeout(60000);
+				webClient.getOptions().setJavaScriptEnabled(false);
+		    	webClient.getOptions().setCssEnabled(false);
+		    	webClient.getOptions().setTimeout(60000);
 		    	webClient.setRefreshHandler(new ThreadedRefreshHandler());
 		    	webClient.setAjaxController(new AjaxController());
 		    	first_htmlPage=null;

@@ -243,10 +243,10 @@ public class ImageCollector {
 		
 		WebClient webClient = new WebClient();
 		webClient.setRefreshHandler(new ThreadedRefreshHandler());
-		webClient.setJavaScriptEnabled(false);
-    	webClient.setCssEnabled(false);
+		webClient.getOptions().setJavaScriptEnabled(false);
+    	webClient.getOptions().setCssEnabled(false);
     	webClient.setAjaxController(new AjaxController());
-    	webClient.setTimeout(WEB_CLIENT_TIMEOUT);
+    	webClient.getOptions().setTimeout(WEB_CLIENT_TIMEOUT);
     	
     	String fixedURL = urlDecode(surl);
     	if(!(fixedURL==null || fixedURL.equals(""))){

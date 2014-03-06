@@ -74,8 +74,8 @@ public class TaoBaoCrawlerSingleWeb{
 	public static String crawlSinglePage(String singleLink,String attr) throws FailingHttpStatusCodeException, MalformedURLException, IOException, InterruptedException 
 	{
 		WebClient webClient = new WebClient();
-		webClient.setJavaScriptEnabled(false);
-    	webClient.setCssEnabled(false);
+		webClient.getOptions().setJavaScriptEnabled(false);
+    	webClient.getOptions().setCssEnabled(false);
     	webClient.setRefreshHandler(new ThreadedRefreshHandler());
     	//webClient.setAjaxController(new AjaxController());
     	webClient.addRequestHeader("Referer", singleLink);
