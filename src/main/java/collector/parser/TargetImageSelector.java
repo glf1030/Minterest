@@ -57,17 +57,16 @@ public class TargetImageSelector {
 	
 	public TargetImageSelector(GoogleHtmlObject gobj, ArrayList<WebImageObject> imgObjs, MovieItem movieItem) {
 		
-		LOG.warn(Thread.currentThread().getName()+"\tStart to find target image..."+imgObjs.size());
 		if(imgObjs==null || imgObjs.size()==0){
 			LOG.warn(Thread.currentThread().getName()+"\tNo image crawled from the source page..."+gobj.webUrl);
 			return;
 		}
+		LOG.warn(Thread.currentThread().getName()+"\tStart to find target image..."+imgObjs.size());
 		// validation
 		String summary = gobj.summary;
 		String title = imgObjs.get(0).title;
 		if (!isRelevantItem(movieItem, title, summary))
 			return;
-
 		// if valid, continue to build targetObject
 		String queryUrlStr = gobj.smallImageUrl;
 		WebImageObject targeObj = getTargetImage(queryUrlStr, imgObjs);
@@ -100,6 +99,12 @@ public class TargetImageSelector {
 		
 	}
 	
+	/**
+	 * Rank the images
+	 * @param queryurlstr
+	 * @param targetImageObjs
+	 * @return
+	 */
 	private static WebImageObject getTargetImage(String queryurlstr, ArrayList<WebImageObject> targetImageObjs){
 		LOG.info(Thread.currentThread().getName()+"\tStart to calculate the image similarity..."+targetImageObjs.size());
 		Map<WebImageObject,Integer> map = new HashMap<WebImageObject,Integer>();
@@ -141,7 +146,7 @@ public class TargetImageSelector {
 				int width = bImg.getWidth();
 				int height = bImg.getHeight();
 				if(width<Parameters.WIDTH || height<Parameters.HEIGHT){
-					LOG.info(Thread.currentThread().getName()+"\tImage size too small...");
+					LOG.info(Thread.currentThread().getName()+"\tImage size too small...width="+width+" <"+Parameters.WIDTH +" or height="+height+" < "+Parameters.HEIGHT);
 					continue;
 				}
 				targetImageObj.width = width;
@@ -234,22 +239,22 @@ public class TargetImageSelector {
 		String director = movieItem.get_director();
 		String[] actorList = movieItem.get_actor_list();
 		
-		if(movieName.equals("") || director==null || actorList==null ){
+		if(movieName==null || movieName.equals("") || director==null || actorList==null ){
 			LOG.info(Thread.currentThread().getName()+"\tImcomplete MovieItem...");
 			return false;
 		}
 		if(title==null){
 			LOG.info(Thread.currentThread().getName()+"\tTitle from source webpage is empty");
-			return false;
+			title="";
 		}
 		if(summary==null){
 			LOG.info(Thread.currentThread().getName()+"\tSummary from google image is empty");
-			return false;
+			summary ="";
 		}
 		StringBuffer movieInfo = new StringBuffer(movieName);
 		//Title contains movie name
 		if(title.contains(movieName)){
-			LOG.info(Thread.currentThread().getName()+"\tTitle contains movie name...");
+			LOG.info(Thread.currentThread().getName()+"\tGoogle Item accept: Title contains movie name..."+title+"\t"+movieName);
 			isValid=true;
 			return isValid;
 		}
@@ -265,10 +270,11 @@ public class TargetImageSelector {
 			casts.add(cast);
 			movieInfo.append(cast);
 		}
-		LOG.info(Thread.currentThread().getName()+"\tmovieName:"+movieName+"\tcasts:"+Arrays.toString(casts.toArray(new String[casts.size()])));
+		LOG.info(Thread.currentThread().getName()+
+				"\tmovieName:"+movieName+"\tcasts:"+Arrays.toString(casts.toArray(new String[casts.size()])));
 		for(String cast:casts){
 			if(title.contains(cast)){
-				LOG.info(Thread.currentThread().getName()+"\tTitle contains cast name...:"+cast);
+				LOG.info(Thread.currentThread().getName()+"\tTitle contains cast name...:"+title+"\t"+cast);
 				isValid = true;
 				return isValid;
 			}
@@ -277,7 +283,7 @@ public class TargetImageSelector {
 		//otherwise, look at the google summary
 		int matchCount = countMatch(summary, movieInfo.toString());
 		if(matchCount > 0){
-			LOG.info(Thread.currentThread().getName()+"\tsummary contains movie info...count:"+matchCount);
+			LOG.info(Thread.currentThread().getName()+"\tsummary contains movie info...count:"+matchCount+"\t"+summary+"\t"+movieInfo.toString());
 			return true;
 		}
 		else return false;
@@ -302,10 +308,14 @@ public class TargetImageSelector {
 		
 		for(char c:titleArr){
 			if(!ImageCollectorUtils.isHanZi(c))continue;
-			if(summarySet.contains(c))count++;
+			if(summarySet.contains(c)){
+				System.out.println(c);
+				count++;
+			}
 		}
 		return count;
 	}
+
 	
 	public static void main(String[] args) {
 		PropertyConfigurator.configure("log4j.properties");
@@ -321,10 +331,10 @@ public class TargetImageSelector {
 		movieItem.set_movie_name("最美的时光");
 		movieItem.set_movie_id("xxxxxxxx");
 		movieItem.set_director("");
-		movieItem.set_actor_list(new String[]{"孙俪"});
+		movieItem.set_actor_list(new String[]{"曾丽珍","钟汉良","张钧甯","贾乃亮"});
 		
-		String summary = "44372_804249_672559.jpg";
-		String title = "明星的产后瘦身Style 领衔变辣妈";
+		String summary = "HUGO BOSS加快电子商务步伐中国网店开张. HUGO BOSS中国官方网店将会销售核心";
+		String title = "HUGO BOSS加快电子商务步伐 中国网店开张";
 //		System.out.println(TargetImageSelector.countMatch(summary, title));
 		System.out.println(TargetImageSelector.isRelevantItem(movieItem, title, summary));
 	}

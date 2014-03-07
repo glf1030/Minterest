@@ -31,7 +31,7 @@ public class ImageCollector {
 	 * @param itemPath
 	 * @param movieItem
 	 */
-	public static void multipleStart(String itemPath, MovieItem movieItem){
+	public  void multipleStart(String itemPath, MovieItem movieItem){
 		MultipleThreadCollector.start(itemPath,movieItem);
 	}
 	
@@ -46,7 +46,7 @@ public class ImageCollector {
 		String path = "e:/crawlerdata/辣妈正传/";
 
 		ImageCollector.singleStart(path, movieItem);
-		ImageCollector.multipleStart(path, movieItem);
+		//ImageCollector.multipleStart(path, movieItem);
 
 	}
 

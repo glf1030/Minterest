@@ -22,36 +22,38 @@ public class BlockingSiteFactory {
 		
 	}
 	HashSet<String> blockingSites = null;
-	public BlockingSiteFactory() {
-		if(blockingSites==null)
-			blockingSites= new HashSet();
-		try
-		{
-			MysqlDatabase md=new MysqlDatabase();
-			ArrayList<String> queryList=md.getBlockingSites();
-		
-			for(String q:queryList)
-				{
-				URL url = new URL(q);
-				blockingSites.add(url.getHost());
-				}
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
 //	public BlockingSiteFactory() {
-//		// TODO Auto-generated constructor stub
-//		this.blockingSites = new HashSet<>();
-//		try {
-//			this.blockingSites.add(new URL("http://www.rpgwebgame.com/").getHost());
-//			this.blockingSites.add(new URL("http://www.jnyl.org.cn/").getHost());
-//		} catch (MalformedURLException e) {
-//			return;
+//		if(blockingSites==null)
+//			blockingSites= new HashSet();
+//		try
+//		{
+//			MysqlDatabase md=new MysqlDatabase();
+//			ArrayList<String> queryList=md.getBlockingSites();
+//		
+//			for(String q:queryList)
+//				{
+//				URL url = new URL(q);
+//				blockingSites.add(url.getHost());
+//				}
+//		}
+//		catch(Exception e)
+//		{
+//			e.printStackTrace();
 //		}
 //	}
+	
+	public BlockingSiteFactory() {
+		// TODO Auto-generated constructor stub
+		this.blockingSites = new HashSet<>();
+		try {
+			this.blockingSites.add(new URL("http://www.rpgwebgame.com/").getHost());
+			this.blockingSites.add(new URL("http://www.jnyl.org.cn/").getHost());
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			return;
+		}
+	}
 	
 	public HashSet<String> getSites(){
 		return this.blockingSites;

@@ -39,7 +39,8 @@ public class RideoItemConstructor {
 		String description;
 		if(imageObject.alt!=null && !imageObject.alt.equals(""))description = imageObject.alt;
 		else{
-			description = imageObject.text;
+//			description = imageObject.text;
+			description = "";
 		}
 		
 		dbObject = new RideoItem();

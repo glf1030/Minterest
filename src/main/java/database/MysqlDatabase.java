@@ -4,20 +4,21 @@ package database;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+
 import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
 
 
 
-
-
-import com.esotericsoftware.minlog.Log;
 import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
+import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 
 import entity.GoogleImageItem;
 import entity.MovieItem;
@@ -43,8 +44,7 @@ public class MysqlDatabase {
 		{
 			
 			conn = (Connection) DriverManager.getConnection("jdbc:mysql://192.168.1.55:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
-//			conn = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
-			
+		
 		//	conn = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/ContentDiary?useUnicode=true&characterEncoding=UTF-8","root","111111");
 			
 			
@@ -188,19 +188,21 @@ public class MysqlDatabase {
 		 return taobaoKeywords;
 		
 	}
+	
 	/**
+	 * Not finished yet.
 	 * @return
 	 */
 	public ArrayList<String> getBlockingSites(){
-		ArrayList<String> b_links = new ArrayList<String>();
+		ArrayList<String> taobaoKeywords = new ArrayList<String>();
 
-		String sql = "SELECT * FROM Minterest.BlockLink";
+		String sql = "SELECT * FROM Minterest.Blocking";
 		PreparedStatement stmt;
 		try {
 			stmt = conn.clientPrepareStatement(sql);
 			ResultSet rs = stmt.executeQuery(sql);
 			while (rs.next()) {
-				b_links.add(rs.getString("b_link"));
+				taobaoKeywords.add(rs.getString("query"));
 
 			}
 		} catch (SQLException e) {
@@ -208,55 +210,9 @@ public class MysqlDatabase {
 			e.printStackTrace();
 		}
 
-		return b_links;
+		return taobaoKeywords;
 	}
 
-	
-	public Boolean insertRideoItemRecord(RideoItem rideoItem)
-			throws MySQLIntegrityConstraintViolationException,SQLException {
-
-		Boolean existed = false;
-
-		String pid = rideoItem.getPID();
-
-		String sql = "select * from Minterest.Rideo_GoogleImage where p_id='" + pid
-				+ "'";
-		PreparedStatement stmt;
-		stmt = conn.clientPrepareStatement(sql);
-		ResultSet rs = stmt.executeQuery(sql);
-		while (rs.next()) {
-
-			existed = true;
-		}
-
-		PreparedStatement stat = null;
-
-		stat = conn
-				.clientPrepareStatement("INSERT INTO Minterest.Rideo_GoogleImage VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		stat.setInt(1, 0);
-		stat.setString(2, rideoItem.getPID());
-		stat.setString(3, rideoItem.getMID());
-		stat.setString(4, rideoItem.getPUrl());
-		stat.setString(5, rideoItem.getDes());
-		stat.setString(6, rideoItem.getSourceLink());
-		stat.setString(7, rideoItem.getLocalAdd());
-		stat.setString(8, rideoItem.getTitle());
-		stat.setString(9, rideoItem.getSourceType());
-		stat.setString(10, rideoItem.getIsExternal());
-		stat.setString(11, rideoItem.getIsInteresting());
-		stat.setInt(12, rideoItem.getGroupNum());
-		stat.setString(13, rideoItem.getTags());
-		stat.setDouble(14, rideoItem.getWidths());
-		stat.setDouble(15, rideoItem.getHeights());
-		stat.setString(16, rideoItem.getIssues());
-		stat.setString(17, rideoItem.getDate());
-		stat.setString(18, rideoItem.getKeyword());
-//		taskLog.info(Thread.currentThread().getName()+"\tInsert sql:"+stat.toString());
-		stat.execute();
-		
-		return existed;
-
-	}
 	/*
 	 * true: 插入的数据，数据库里面并不存在
 	 * false: 插入的数据，数据库里面有。
@@ -336,14 +292,16 @@ public class MysqlDatabase {
 		 * test by lg
 		 */
 		MysqlDatabase mdb=new MysqlDatabase();
-		ArrayList<MovieItem> miList=mdb.batchsearchTaobaoMovieDataFromMysql();
-		for(MovieItem mi:miList)
-		{
-//			for(String s:mi.get_actor_list())
-//				System.out.println(s);
-			System.out.println(mi.get_movie_name());
-			
-		}
+		MovieItem mi=mdb.getMovieItemByMovieID("8c981058-6d19-4452-b93e-daa4b45a4c4b");
+		System.out.println(mi.get_movie_name());
+//		ArrayList<MovieItem> miList=mdb.batchsearchTaobaoMovieDataFromMysql();
+//		for(MovieItem mi:miList)
+//		{
+////			for(String s:mi.get_actor_list())
+////				System.out.println(s);
+//			System.out.println(mi.get_movie_name());
+//			
+//		}
 	}
 
 
@@ -401,5 +359,110 @@ ArrayList<String> fashionLinks=new ArrayList<String>();
 		 
 		
 		return miList;
+	}
+
+
+	public MovieItem getMovieItemByMovieID(String movieID) 
+	{
+		MovieItem mi=new MovieItem();
+		 try
+		 {
+			 String sql="select * from ContentDiary.movie where movie_id='"+movieID+"' limit 1";
+			 PreparedStatement stmt = conn.clientPrepareStatement(sql);
+		
+			  ResultSet rs = stmt .executeQuery(sql);
+			  
+			  while(rs.next())
+			  { 
+			   
+			   
+			   String movie_name=rs.getString("movie_name");
+			   movie_name= movie_name.substring(0,movie_name.indexOf("("));
+			   mi.set_movie_name(movie_name);
+			   mi.set_movie_id(rs.getString("movie_id"));
+			   mi.set_director(rs.getString("director"));
+			   mi.set_actor_list((rs.getString("actor_list").split(";")));
+			  
+			  }
+		 }
+		 catch(Exception e)
+		 {
+			 e.printStackTrace();
+		 }
+		 return mi;
+	}
+
+
+	public BlockingQueue<String> getGoogleImageQueryList() 
+	{
+		BlockingQueue<String> bq=new LinkedBlockingQueue<String>();
+		MovieItem mi=new MovieItem();
+		 try
+		 {
+			 String sql="SELECT * FROM Minterest.FashionLink";
+			 PreparedStatement stmt = conn.clientPrepareStatement(sql);
+		
+			  ResultSet rs = stmt .executeQuery(sql);
+			  
+			  while(rs.next())
+			  { 
+			   
+			   
+			   String link=rs.getString("link");
+			   bq.put(link);
+			  
+			  }
+		 }
+		 catch(Exception e)
+		 {
+			 e.printStackTrace();
+		 }
+		 return bq;
+	}
+	
+	public Boolean insertRideoItemRecord(RideoItem rideoItem)
+			throws MySQLIntegrityConstraintViolationException,SQLException {
+
+		Boolean existed = false;
+
+		String pid = rideoItem.getPID();
+
+		String sql = "select * from Minterest.Rideo_GoogleImage where p_id='" + pid
+				+ "'";
+		PreparedStatement stmt;
+		stmt = conn.clientPrepareStatement(sql);
+		ResultSet rs = stmt.executeQuery(sql);
+		while (rs.next()) {
+
+			existed = true;
+		}
+
+		PreparedStatement stat = null;
+
+		stat = conn
+				.clientPrepareStatement("INSERT INTO Minterest.Rideo_GoogleImage VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		stat.setInt(1, 0);
+		stat.setString(2, rideoItem.getPID());
+		stat.setString(3, rideoItem.getMID());
+		stat.setString(4, rideoItem.getPUrl());
+		stat.setString(5, rideoItem.getDes());
+		stat.setString(6, rideoItem.getSourceLink());
+		stat.setString(7, rideoItem.getLocalAdd());
+		stat.setString(8, rideoItem.getTitle());
+		stat.setString(9, rideoItem.getSourceType());
+		stat.setString(10, rideoItem.getIsExternal());
+		stat.setString(11, rideoItem.getIsInteresting());
+		stat.setInt(12, rideoItem.getGroupNum());
+		stat.setString(13, rideoItem.getTags());
+		stat.setDouble(14, rideoItem.getWidths());
+		stat.setDouble(15, rideoItem.getHeights());
+		stat.setString(16, rideoItem.getIssues());
+		stat.setString(17, rideoItem.getDate());
+		stat.setString(18, rideoItem.getKeyword());
+//		taskLog.info(Thread.currentThread().getName()+"\tInsert sql:"+stat.toString());
+		stat.execute();
+		
+		return existed;
+
 	}
 }

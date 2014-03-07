@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -23,6 +24,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+
+import database.MysqlDatabase;
+import entity.MovieItem;
 
 
 public class GoogleCrawler 
@@ -46,7 +50,7 @@ public class GoogleCrawler
 		Logger taskLog=Logger.getLogger("task");
 		ExecutorService service = Executors.newCachedThreadPool();  
 		//Creating shared object
-		BlockingQueue<String> sharedQueue = new LinkedBlockingQueue<String>();
+		BlockingQueue<HashMap<String,String[]>> sharedQueue = new LinkedBlockingQueue<HashMap<String,String[]>>();
 		BlockingQueue<Boolean> taskMonitorQueue=new LinkedBlockingQueue<Boolean>();
 		taskMonitorQueue.put(false);
 
@@ -77,12 +81,13 @@ class Producer implements Runnable
 	Logger taskLog=Logger.getLogger("task");
 	Grawler crawler = new Grawler();
 
-	private final BlockingQueue<String> sharedQueue;
+	MysqlDatabase mdb=new MysqlDatabase();
+	private final BlockingQueue<HashMap<String,String[]>> sharedQueue;
 	private final BlockingQueue<Boolean> taskMonitorQueue;
 
 
 
-	public Producer(BlockingQueue<String> sharedQueue,BlockingQueue<Boolean> taskMonitorQueue) 
+	public Producer(BlockingQueue<HashMap<String,String[]>> sharedQueue,BlockingQueue<Boolean> taskMonitorQueue) 
 	{
 		this.sharedQueue =sharedQueue;
 		this.taskMonitorQueue=taskMonitorQueue;
@@ -92,17 +97,17 @@ class Producer implements Runnable
 	public synchronized void run() 
 	{
 
-		BlockingQueue<String> movieList = new LinkedBlockingQueue<String>();
+		BlockingQueue<String> movieIDList = new LinkedBlockingQueue<String>();
 		try
 		{
 
 			BufferedReader readerMovie=new BufferedReader(new FileReader("./movieList"));
-			String movieName="";
-			while((movieName=readerMovie.readLine())!=null)
+			String movieID="";
+			while((movieID=readerMovie.readLine())!=null)
 			{
-				String s=movieName;
+				String s=movieID;
 
-				movieList.add(s);
+				movieIDList.add(s);
 			}
 
 			readerMovie.close();
@@ -115,26 +120,29 @@ class Producer implements Runnable
 		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
 		Date date = new Date();                               
 		System.out.println(sf.format(date));    
-		int movieListSize=movieList.size();
+		int movieListSize=movieIDList.size();
 		for(int i=0;i<movieListSize;i++)
 		{
-			try
-			{
-				String movieName=movieList.poll();
-				ArrayList<String> movieGoogleSearch=null;//crawler.crawler_google_image_htmlFormat(sf.format(date),movieName,movieId);
-				for(int j=0;j<movieGoogleSearch.size();j++)
+			
+			
+				String movieID=movieIDList.poll();
+				
+				MovieItem mi=mdb.getMovieItemByMovieID(movieID);
+				System.out.println(mi.get_movie_name());
+				BlockingQueue<String> queryList=mdb.getGoogleImageQueryList();
+				
+				int querySize=queryList.size();
+				for(int j=0;j<2;j++)
 				{
-					System.out.println("I am putting "+ movieGoogleSearch.get(j));
-					taskLog.info("I am putting"+movieGoogleSearch.get(j));
-					sharedQueue.put(movieGoogleSearch.get(j));
+					String site_query=queryList.poll();
+					System.out.println(site_query);
+					crawler.crawler_google_image_htmlFormat(sf.format(date),mi,site_query,sharedQueue);
+
 				}
 
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
 		}
+			
+	
 		try {
 			taskMonitorQueue.poll();
 			taskMonitorQueue.put(true);
@@ -156,21 +164,21 @@ class Consumer implements Runnable
 {
 	Logger taskLog=Logger.getLogger("task");
 
-	int corePoolSize=50;
-	int maxiumPoolSize=100;
+	int corePoolSize=10;
+	int maxiumPoolSize=20;
 	long keepLiveTime=1000*60;
 	
 
 
 	ArrayList<Future<String>> futureList=new ArrayList<Future<String>>();
 
-	private final BlockingQueue<String> sharedQueue;
+	private final BlockingQueue<HashMap<String,String[]>> sharedQueue;
 	private final BlockingQueue<Boolean> taskMonitorQueue;
 
 
 
 
-	public Consumer (BlockingQueue<String> sharedQueue,BlockingQueue<Boolean>taskMonitorQueue) 
+	public Consumer (BlockingQueue<HashMap<String,String[]>> sharedQueue,BlockingQueue<Boolean>taskMonitorQueue) 
 	{
 		this.sharedQueue = sharedQueue;
 		this.taskMonitorQueue=taskMonitorQueue;
@@ -187,7 +195,7 @@ class Consumer implements Runnable
 		{
 
 
-			String folder="";
+			HashMap<String,String[]>  folder=new HashMap<String,String[]>();
 
 			if(!sharedQueue.isEmpty())
 			{
@@ -200,7 +208,13 @@ class Consumer implements Runnable
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				final String folderName=folder;
+				final MovieItem mi=new MovieItem();
+				mi.set_movie_name(folder.get("movieName")[0]);
+				mi.set_movie_id(folder.get("movieID")[0]);
+				mi.set_director(folder.get("director")[0]);
+				mi.set_actor_list(folder.get("actors"));
+				
+				final String folderName=folder.get("folderName")[0];
 				//			    Future<String> future = 
 				//			    		threadPool.submit(new Callable<String>() 
 				//			    {  
@@ -221,7 +235,7 @@ class Consumer implements Runnable
 					{
 						taskLog.info("Consuming:"+folderName);
 						System.out.println("Consuming "+folderName);
-						Test1 t=new Test1(folderName);
+						Test1 t=new Test1(mi,folderName);
 						try {
 							t.r();
 						} catch (InterruptedException e) {
@@ -234,91 +248,21 @@ class Consumer implements Runnable
 
 				threadPool.execute(run);
 				
-				System.out.println(sharedQueue.size());
-
+				System.out.println("sharedQueue has "+sharedQueue.size());
+				System.out.println(sharedQueue.isEmpty());
+				//System.out.println("taskMonitor"+taskMonitorQueue.peek());
 			}
 			else if(taskMonitorQueue.peek())
 			{
+				taskLog.info("-----------------------------------");
+				taskLog.info("finished all the tasks");
 				System.out.println("-----------------------------------");
 				break;
 			}
-
-
-
-
-
-			//            	int currentThread=0;
-			//            	while(currentThread<maxiumaThreadN)
-			//            	{
-			//            		
-			//            		String folder=null;
-			//					try 
-			//					{
-			//						if(!sharedQueue.isEmpty())
-			//						{
-			//							System.out.println("current sharedQueue has"+sharedQueue.size());
-			//							Object[] queue=sharedQueue.toArray();
-			//							for(int j=0;j<queue.length;j++)
-			//								System.out.println(queue[j].toString());
-			//						folder = sharedQueue.take();
-			//						currentThread++;
-			//						}
-			//						
-			//					} catch (InterruptedException e) 
-			//					{
-			//						// TODO Auto-generated catch block
-			//						e.printStackTrace();
-			//					}
-			//					if(folder!=null)
-			//					{
-			//						  
-			//					   // System.out.println("starting thread" +i+ "Consumed:"+ folder);
-			//					    Log.info("starting thread" +currentThread+ "Consumed:"+ folder);
-			//					    final String folderName=folder;
-			//					    Future<String> future = threadPool.submit(new Callable<String>() 
-			//					    {  
-			//				            public String call() throws Exception 
-			//				            {  
-			//				            	Test1 t=new Test1(folderName);
-			//				            	//IC.start(0);   //Here
-			//								t.r();
-			//								return folderName+" is done";
-			//  
-			//				            }  
-			//				        });
-			//					    futureList.add(future);
-			//					    					
-			//					}
-			//            	}
-			////            	System.out.println("-----------------------------------");
-			////            	System.out.println(futureList.size());
-			//           for(int i=0;i<futureList.size();i++)
-			//           {
-			//        	   try 
-			//        	{
-			//        		  
-			//        		   Log.info(futureList.get(i).get(1000*60*60,TimeUnit.MILLISECONDS)+"is done");
-			////        		   System.out.println(futureList.get(i).get());
-			////				   System.out.println(futureList.get(i).get(1000*60*60,TimeUnit.MILLISECONDS)+"is done");
-			//	   
-			//			} 
-			//        	  catch (InterruptedException e) 
-			//			{
-			//				// TODO Auto-generated catch block
-			//				e.printStackTrace();
-			//			} catch (ExecutionException e) {
-			//				// TODO Auto-generated catch block
-			//				e.printStackTrace();
-			//			} catch (TimeoutException e) 
-			//			{
-			//				// TODO Auto-generated catch block
-			//				e.printStackTrace();
-			//			}
-			//           }
-			//           
-			//           futureList=new ArrayList<Future<String>>();
-
-
+			else
+			{
+				taskMonitorQueue.peek();
+			}
 		}
 		taskLog.info("Consumer has finished");
 		System.out.println("Consumer has finished");
@@ -332,20 +276,23 @@ class Test1
 {
 	Logger taskLog=Logger.getLogger("task");
 	String fileName="";
-	public  Test1(String s)
+	MovieItem mi=null;
+	public  Test1(MovieItem mi,String s)
 	{
-		fileName=s;
+		this.mi=mi;
+		this.fileName=s;
 	}
 
 	public synchronized void r() throws InterruptedException
 	{
 		taskLog.info(fileName+"is working");
 		System.out.println(fileName+"is working");
-		   ImageCollectorOld ic=new ImageCollectorOld();
-		   ic.singleStart(fileName);
-		Thread.sleep(1000*60*10);
+		 ImageCollector ic=new ImageCollector();
+		ic.multipleStart(fileName, mi);
+		  // ic.singleStart(fileName);
+		Thread.sleep(1000*60);
 		taskLog.info(fileName+" has finished");
-		System.out.println(fileName);
+		System.out.println(fileName+"has finished");
 
 	}
 

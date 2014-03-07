@@ -150,5 +150,19 @@ public class GoogleHtmlParser {
 		}
 		return result;
 	}
-	
+	public static void main(String[] args) {
+		String html = "http://fashion.sina.com.cn/fas/2014-01-27/131034448.shtml";
+		Document googleImageDoc = null;
+
+		File googleFile = new File(html);
+		try {
+			googleImageDoc = Jsoup.parse(googleFile,"UTF-8","");
+			System.out.println(googleImageDoc);
+			System.out.println(googleImageDoc.title());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			
+		}
+	}
 }

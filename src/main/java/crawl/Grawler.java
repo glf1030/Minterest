@@ -56,14 +56,15 @@ import util.URLEncoding;
 
 public class Grawler 
 {  
-	static Logger log = Logger.getLogger("task");
+	Logger taskLog=Logger.getLogger("task");
 	
 	double threashold;
 	int number_limit;
 	HashMap<String,String>  movie_nameID;
 	ArrayList<String> webList;
 	MysqlDatabase database=new MysqlDatabase();
-
+	String folder="/rideo/";
+   // String folder="/mnt/nfs/nas179/rideo/";
 	public Grawler()
 	{
 		 java.util.Properties prop=new 	java.util.Properties();
@@ -95,18 +96,14 @@ public class Grawler
 		mapper.configure(Feature.INDENT_OUTPUT, true);
 		return mapper;
 	}
-	public synchronized void crawler_google_image_htmlFormat(String date,String movieName, String site,BlockingQueue<String> taskQueue)  
+	public synchronized void crawler_google_image_htmlFormat(String date,MovieItem mi, String site,BlockingQueue<HashMap<String,String[]>> taskQueue)  
 	{
+		
+	    String movieName=mi.get_movie_name();
 		 String pinyin=FileName2Pinyin.convertHanzi2PinyinStr(movieName);
 		 java.util.Properties prop=new 	java.util.Properties();
-		 try {
-			prop.load(new FileInputStream("./config"));
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
 		//File movieFolder=new File("/mnt/nfs/nas179/rideo/"+pinyin);
-	    File movieFolder=new File("/rideo/"+pinyin);
+	    File movieFolder=new File(folder+pinyin);
 		  if(!movieFolder.exists())
 		  {
 			  System.out.println(movieFolder.getAbsolutePath());
@@ -128,8 +125,9 @@ public class Grawler
 			               //"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.66 Safari/537.36"
 			};
 			int num_pages=0;
-			try {
-				String first_urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
+			try 
+			{
+				String first_urlStr="https://www.google.com/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
 				
 				WebClient webClient = new WebClient();
 				webClient.getOptions().setJavaScriptEnabled(false);
@@ -140,18 +138,22 @@ public class Grawler
 		    	HtmlPage first_htmlPage=null;
 		    	first_htmlPage = webClient.getPage(first_urlStr);
 		    	Document first_doc = Jsoup.parse(first_htmlPage.asXml());
+
+		    	Boolean noresutls=first_doc.html().contains("No results found for");
 		    	
-		    	if(first_doc.select("[id=resultStats]")!=null)
-		    	{
+		    	if(first_doc.select("[id=resultStats]")!=null&&!noresutls)
+		  {
 		  String number=first_doc.select("[id=resultStats]").html().trim().replace("About", "").replace("results", "").replace(",","").trim();
-		    	
+		 	
+	
+		  if(number.trim().length()!=0)
 		 num_pages=(int) (Double.valueOf(number)/20)+1;
-		  
-		  System.out.println(num_pages);
+	
+	
 		  if(num_pages>50)
 		  {
 			  movieName="《"+movieName+"》";
-			  first_urlStr="https://www.google.ca/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
+			  first_urlStr="https://www.google.com/search?q=\""+URLEncoding.encode(movieName)+"\"+site:"+site+"&source=lnms&tbm=isch";
 				System.out.println(first_urlStr);
 				webClient = new WebClient();
 				webClient.getOptions().setJavaScriptEnabled(false);
@@ -176,14 +178,18 @@ public class Grawler
 			  num_pages=25;
 		  }
 		    	
+		}
+		   else
+		    	{
+		    		taskLog.info("no objects for "+movieFolder);
+		    		System.out.println("no objects for "+movieFolder);
+		    	}
 			}
-			}catch (MalformedURLException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
+			catch (Exception e) 
+			{
 				e.printStackTrace();
 			}
+			
 	      for(int i=0;i<num_pages;i++)
 	      {
 	    try
@@ -199,6 +205,7 @@ public class Grawler
 	        cont.connect();
 	        BufferedReader  reader = new BufferedReader(new InputStreamReader(cont.getInputStream()));
 	        String outputFileName=movieFolder.getAbsolutePath()+"/"+MD5Generator.execute(site)+"_"+date+"_"+i+".html";
+	      
 	        FileWriter fw = new FileWriter(outputFileName);
 			BufferedWriter bw = new BufferedWriter(fw);
 	        String s;        
@@ -209,6 +216,19 @@ public class Grawler
 	        
 	        bw.flush();
 	        bw.close();
+	        HashMap<String,String[]> movieTask=new HashMap<String,String[]>();
+	        
+            movieTask.put("movieName", new String[]{mi.get_movie_name()});
+	        movieTask.put("movieID",new String[]{mi.get_movie_id()});
+	        movieTask.put("director", new String[]{mi.get_director()});
+	        movieTask.put("actors", mi.get_actor_list());
+	        movieTask.put("folderName", new String[]{outputFileName});
+	        
+	        
+	        
+	        taskQueue.put(movieTask);
+	        System.out.println("Producing"+"\t"+outputFileName);
+	        taskLog.info("Producing"+"\t"+outputFileName);
 	        
 	    }  
 		      catch(Exception e)
@@ -226,6 +246,7 @@ public class Grawler
 	      int r=(int) (Math.random()*2);
 	      try
 	      {
+	    	  
 	    	  System.out.println("waiting for "+2*r+" min");
 	          Thread.sleep(1000*60*2*r);
 	      }
@@ -234,6 +255,7 @@ public class Grawler
 	    	  e.printStackTrace();
 	    	  
 	      }
+	      
 	  }
 
 	
@@ -254,7 +276,7 @@ public class Grawler
               Grawler gcrawler=new Grawler();
               String date="3-14";
               String movieName="角色";
-		gcrawler.crawler_google_image_htmlFormat(date, movieName, "fashion.sina.com.cn",null);
+		//gcrawler.crawler_google_image_htmlFormat(date, movieName, "fashion.sina.com.cn",null);
 
 		   
 		}

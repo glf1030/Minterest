@@ -32,38 +32,38 @@ public class MultipleThreadCollector {
 	 * @param itemPath: folder with html files
 	 * @param movieItem
 	 */
-	public static void start(String itemPath, MovieItem movieItem){
+	public static void start(String html, MovieItem movieItem){
 		
 		PropertyConfigurator.configure("log4j.properties");
-		File dir = new File(itemPath);
-		File[] htmls = dir.listFiles();
-		for(File html:htmls){
-			if(html.isDirectory())continue;
-			else if(!html.getName().endsWith("htm")&&(!html.getName().endsWith("html")))continue;
-			else{
-				long startTime = System.currentTimeMillis();
-//				ExecutorService executor = Executors.newFixedThreadPool(Parameters.THREAD_NUM);
-				ExecutorService executor = new ThreadPoolExecutor(Parameters.THREAD_NUM, 20, 60*1000, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());    
+//		File dir = new File(itemPath);
+	//	File[] htmls = dir.listFiles();
+//		for(File html:htmls){}
+        File htmlFile=new File(html);
+//		if(html.isDirectory())continue;
+		if(!htmlFile.getName().endsWith("htm")&&(!htmlFile.getName().endsWith("html"))) return;
+		else{
+			long startTime = System.currentTimeMillis();
+//			ExecutorService executor = Executors.newFixedThreadPool(Parameters.THREAD_NUM);
+			ExecutorService executor = new ThreadPoolExecutor(Parameters.THREAD_NUM, 20, 60*1000, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());    
 
-				String htmlPath = html.getAbsolutePath();
-				ArrayList<GoogleHtmlObject> googleHtmlObjects = GoogleHtmlParser.getGoogleHtmlItems(htmlPath);
-				for(GoogleHtmlObject googleHtmlObj:googleHtmlObjects){
-					MyGoogleItemTask myTask = new MyGoogleItemTask(googleHtmlObj, movieItem);
-					executor.execute(myTask);
-					LOG.info(Thread.currentThread().getName()+"\tAdd new task to queue...");
-				}
-				executor.shutdown();
-				try {
-					executor.awaitTermination(Parameters.MAX_HTML_PROCESS_SEC_FOR_ONE_ITEM*googleHtmlObjects.size(), TimeUnit.SECONDS);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					LOG.info(Thread.currentThread().getName()+"\t"+e.getMessage());
-					e.printStackTrace();
-				}
-				LOG.info(Thread.currentThread().getName()+"\tYeah!haha Google HTML finished TIMEOUT="+(System.currentTimeMillis()-startTime)/1000 +"secs");
+			String htmlPath = htmlFile.getAbsolutePath();
+			ArrayList<GoogleHtmlObject> googleHtmlObjects = GoogleHtmlParser.getGoogleHtmlItems(htmlPath);
+			for(GoogleHtmlObject googleHtmlObj:googleHtmlObjects){
+				MyGoogleItemTask myTask = new MyGoogleItemTask(googleHtmlObj, movieItem);
+				executor.execute(myTask);
+				LOG.info(Thread.currentThread().getName()+"\tAdd new task to queue...");
 			}
-			
+			executor.shutdown();
+			try {
+				executor.awaitTermination(Parameters.MAX_HTML_PROCESS_SEC_FOR_ONE_ITEM*googleHtmlObjects.size(), TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				LOG.info(Thread.currentThread().getName()+"\t"+e.getMessage());
+				e.printStackTrace();
+			}
+			LOG.info(Thread.currentThread().getName()+"\tYeah!haha Google HTML finished "+html+" \tTIMEOUT="+(System.currentTimeMillis()-startTime)/1000 +"secs");
 		}
+
 		
 	}
 	
