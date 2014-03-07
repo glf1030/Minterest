@@ -3,7 +3,6 @@ package collector.parser;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -35,15 +34,10 @@ public class MultipleThreadCollector {
 	public static void start(String html, MovieItem movieItem){
 		
 		PropertyConfigurator.configure("log4j.properties");
-//		File dir = new File(itemPath);
-	//	File[] htmls = dir.listFiles();
-//		for(File html:htmls){}
         File htmlFile=new File(html);
-//		if(html.isDirectory())continue;
 		if(!htmlFile.getName().endsWith("htm")&&(!htmlFile.getName().endsWith("html"))) return;
 		else{
 			long startTime = System.currentTimeMillis();
-//			ExecutorService executor = Executors.newFixedThreadPool(Parameters.THREAD_NUM);
 			ExecutorService executor = new ThreadPoolExecutor(Parameters.THREAD_NUM, 20, 60*1000, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(), new ThreadPoolExecutor.CallerRunsPolicy());    
 
 			String htmlPath = htmlFile.getAbsolutePath();
@@ -57,14 +51,11 @@ public class MultipleThreadCollector {
 			try {
 				executor.awaitTermination(Parameters.MAX_HTML_PROCESS_SEC_FOR_ONE_ITEM*googleHtmlObjects.size(), TimeUnit.SECONDS);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				LOG.info(Thread.currentThread().getName()+"\t"+e.getMessage());
 				e.printStackTrace();
 			}
 			LOG.info(Thread.currentThread().getName()+"\tYeah!haha Google HTML finished "+html+" \tTIMEOUT="+(System.currentTimeMillis()-startTime)/1000 +"secs");
 		}
-
-		
 	}
 	
 	public static void main(String args[]){

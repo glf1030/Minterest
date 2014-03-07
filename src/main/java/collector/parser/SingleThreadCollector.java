@@ -39,34 +39,31 @@ public class SingleThreadCollector {
 	 * @param itemPath: folder with html files
 	 * @param movieItem
 	 */
-	public static void start(String itemPath, MovieItem movieItem){
+	public static void start(String htmlPath, MovieItem movieItem){
 		
 		PropertyConfigurator.configure("log4j.properties");
-		File dir = new File(itemPath);
-		File[] htmls = dir.listFiles();
-		for(File html:htmls){
-			if(html.isDirectory())continue;
-			else if(!html.getName().endsWith("htm")&&(!html.getName().endsWith("html")))continue;
-			else{
-				String htmlPath = html.getAbsolutePath();
-				ArrayList<GoogleHtmlObject> googleHtmlObjects = GoogleHtmlParser.getGoogleHtmlItems(htmlPath);
-				for(GoogleHtmlObject googleHtmlObj:googleHtmlObjects){
-					String webUrl = googleHtmlObj.webUrl;
-					
-					ArrayList<WebImageObject> webImageObjects = WebPageParser.getImageObjectfromPage(webUrl);
-					TargetImageSelector targetImage = new TargetImageSelector(googleHtmlObj, webImageObjects,movieItem);
-					
-					if(targetImage==null || targetImage.googleObject==null || targetImage.webImageObject==null)continue;
-					
-					RideoItemConstructor rideoItemConstructor = new RideoItemConstructor(targetImage, movieItem.get_movie_id(), movieItem.get_movie_name());
-					ImageStorageManager storageManager = new ImageStorageManager(rideoItemConstructor.getRideoItem());
-					Boolean isSuccess = storageManager.save2Mysql();
-					
-					if(isSuccess)storageManager.save2Local();
-					
-				}
+//		File dir = new File(itemPath);
+//		File[] htmls = dir.listFiles();
+		File html = new File(htmlPath);
+		if(!html.getName().endsWith("htm")&&(!html.getName().endsWith("html")))return;
+		else{
+//			String htmlPath = html.getAbsolutePath();
+			ArrayList<GoogleHtmlObject> googleHtmlObjects = GoogleHtmlParser.getGoogleHtmlItems(htmlPath);
+			for(GoogleHtmlObject googleHtmlObj:googleHtmlObjects){
+				String webUrl = googleHtmlObj.webUrl;
+				
+				ArrayList<WebImageObject> webImageObjects = WebPageParser.getImageObjectfromPage(webUrl);
+				TargetImageSelector targetImage = new TargetImageSelector(googleHtmlObj, webImageObjects,movieItem);
+				
+				if(targetImage==null || targetImage.googleObject==null || targetImage.webImageObject==null)continue;
+				
+				RideoItemConstructor rideoItemConstructor = new RideoItemConstructor(targetImage, movieItem.get_movie_id(), movieItem.get_movie_name());
+				ImageStorageManager storageManager = new ImageStorageManager(rideoItemConstructor.getRideoItem());
+				Boolean isSuccess = storageManager.save2Mysql();
+				
+				if(isSuccess)storageManager.save2Local();
+				
 			}
-			
 		}
 	}
 	

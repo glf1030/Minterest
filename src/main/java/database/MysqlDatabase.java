@@ -43,8 +43,9 @@ public class MysqlDatabase {
 		if(conn==null)
 		{
 			
-			conn = (Connection) DriverManager.getConnection("jdbc:mysql://192.168.1.55:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
-		
+//			conn = (Connection) DriverManager.getConnection("jdbc:mysql://192.168.1.55:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
+			conn = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/Rideo?useUnicode=true&characterEncoding=gbk","root","111111");
+			
 		//	conn = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/ContentDiary?useUnicode=true&characterEncoding=UTF-8","root","111111");
 			
 			

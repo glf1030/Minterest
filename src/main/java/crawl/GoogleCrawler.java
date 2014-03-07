@@ -287,8 +287,9 @@ class Test1
 	{
 		taskLog.info(fileName+"is working");
 		System.out.println(fileName+"is working");
-		 ImageCollector ic=new ImageCollector();
-		ic.multipleStart(fileName, mi);
+//		 ImageCollector ic=new ImageCollector();
+//		ImageCollector.multipleStart(fileName, mi);
+		ImageCollector.singleStart(fileName, mi);
 		  // ic.singleStart(fileName);
 		Thread.sleep(1000*60);
 		taskLog.info(fileName+" has finished");
