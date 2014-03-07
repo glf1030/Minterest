@@ -39,8 +39,8 @@ public class RideoItemConstructor {
 		String description;
 		if(imageObject.alt!=null && !imageObject.alt.equals(""))description = imageObject.alt;
 		else{
-//			description = imageObject.text;
-			description = "";
+			description = googleObj.summary;
+//			description = "";
 		}
 		
 		dbObject = new RideoItem();

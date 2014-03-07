@@ -2,6 +2,7 @@ package collector.parser;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +80,11 @@ public class WebPageParser {
 		} catch (MalformedURLException e) {
 			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tif no URL can be created from the provided string URL="+webUrl);
 			return null;
-		} catch (IOException e) {
+		}catch (SocketTimeoutException e) {
+			WARN.warn(Thread.currentThread().getName()+"\tSocketTimeoutException:url="+webUrl+"\t"+e.getMessage());
+			return null;
+		}
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			WARN.warn(Thread.currentThread().getName()+"\tIOException:url="+webUrl+"\t"+e.getMessage());
 //			e.printStackTrace();

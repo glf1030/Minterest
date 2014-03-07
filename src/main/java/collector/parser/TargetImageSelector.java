@@ -200,6 +200,23 @@ public class TargetImageSelector {
 	
 	}
 	
+	private static ArrayList<String> String2Bigrams(String str){
+		if(str ==null)return null;
+		ArrayList<String> result = new ArrayList<>();
+		if(str.length() <3){
+			result.add(str);
+			return result;
+		}
+		else{
+			for(int i = 0,j=2;j<str.length()+1;i++,j++){
+					String bi = str.substring(i, j);
+					result.add(bi);
+//					System.out.println(str+"\t"+bi);
+			}
+			return result;
+		}
+	}
+	
 	public static <K, V extends Comparable<V>> Map<K, V> sortByValues(final Map<K, V> map) {
 		Comparator<K> valueComparator =  new Comparator<K>() {
 		    public int compare(K k1, K k2) {
@@ -234,10 +251,10 @@ public class TargetImageSelector {
 	 * @return
 	 */
 	public static boolean  isRelevantItem(MovieItem movieItem,String title, String summary){
-		boolean isValid = false;
 		String movieName = movieItem.get_movie_name();
 		String director = movieItem.get_director();
 		String[] actorList = movieItem.get_actor_list();
+		
 		
 		if(movieName==null || movieName.equals("") || director==null || actorList==null ){
 			LOG.info(Thread.currentThread().getName()+"\tImcomplete MovieItem...");
@@ -251,43 +268,29 @@ public class TargetImageSelector {
 			LOG.info(Thread.currentThread().getName()+"\tSummary from google image is empty");
 			summary ="";
 		}
-		StringBuffer movieInfo = new StringBuffer(movieName);
-		//Title contains movie name
-		if(title.contains(movieName)){
-			LOG.info(Thread.currentThread().getName()+"\tGoogle Item accept: Title contains movie name..."+title+"\t"+movieName);
-			isValid=true;
-			return isValid;
+		
+		ArrayList<String> movieInfo = new ArrayList<>();
+		movieInfo.add(movieName);
+		if(!director.equals(""))movieInfo.add(director);
+		for(String actor:actorList)if(!actor.equals(""))movieInfo.add(actor);
+		
+		ArrayList<String> bigrams = new ArrayList<>();
+		for(String minfo:movieInfo){
+			if(title.contains(minfo)){
+				LOG.info(Thread.currentThread().getName()+"\tTitle:"+title+"\tcontains:"+minfo);
+				return true;
+			}
+			ArrayList<String> thisbigram = String2Bigrams(minfo);
+			bigrams.addAll(thisbigram);
 		}
 		
-		
-		//Title contains director name or cast name
-		ArrayList<String> casts = new ArrayList<>();
-		if(!director.equals("") && director!=null){
-			casts.add(director);
-		}
-		
-		for(String cast:actorList){
-			casts.add(cast);
-			movieInfo.append(cast);
-		}
-		LOG.info(Thread.currentThread().getName()+
-				"\tmovieName:"+movieName+"\tcasts:"+Arrays.toString(casts.toArray(new String[casts.size()])));
-		for(String cast:casts){
-			if(title.contains(cast)){
-				LOG.info(Thread.currentThread().getName()+"\tTitle contains cast name...:"+title+"\t"+cast);
-				isValid = true;
-				return isValid;
+		for(String bigram:bigrams){
+			if(summary.contains(bigram)){
+				LOG.info(Thread.currentThread().getName()+"\tSummary:"+summary+"\tcontains:"+bigram);
+				return true;
 			}
 		}
-		
-		//otherwise, look at the google summary
-		int matchCount = countMatch(summary, movieInfo.toString());
-		if(matchCount > 0){
-			LOG.info(Thread.currentThread().getName()+"\tsummary contains movie info...count:"+matchCount+"\t"+summary+"\t"+movieInfo.toString());
-			return true;
-		}
-		else return false;
-		
+		return false;
 	}
 	
 	public static int countMatch(String summary, String title){
@@ -331,10 +334,10 @@ public class TargetImageSelector {
 		movieItem.set_movie_name("最美的时光");
 		movieItem.set_movie_id("xxxxxxxx");
 		movieItem.set_director("");
-		movieItem.set_actor_list(new String[]{"曾丽珍","钟汉良","张钧甯","贾乃亮"});
+		movieItem.set_actor_list(new String[]{"曾丽珍","钟汉良","张钧甯",""});
 		
-		String summary = "HUGO BOSS加快电子商务步伐中国网店开张. HUGO BOSS中国官方网店将会销售核心";
-		String title = "HUGO BOSS加快电子商务步伐 中国网店开张";
+		String summary = "星野Hotel Bleston Court度假村";
+		String title = "海外婚礼蜜月首选：星野梦缘 |婚礼|教堂|度假村_新浪时尚_新浪网";
 //		System.out.println(TargetImageSelector.countMatch(summary, title));
 		System.out.println(TargetImageSelector.isRelevantItem(movieItem, title, summary));
 	}
