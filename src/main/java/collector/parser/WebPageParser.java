@@ -72,29 +72,30 @@ public class WebPageParser {
 		HtmlPage htmlPage = null;
 		long startTime = System.currentTimeMillis();
 		try {
-//			LOG.info("TIMEOUT:"+webClient.getOptions().getTimeout());
+			
 			htmlPage = webClient.getPage(webUrl);
-		} catch (FailingHttpStatusCodeException e) {
-			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tthe server returns a failing status code URL="+webUrl);
-			return null;
-		} catch (MalformedURLException e) {
-			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tif no URL can be created from the provided string URL="+webUrl);
-			return null;
-		}catch (SocketTimeoutException e) {
+			
+		}
+		catch (SocketTimeoutException e) {
 			WARN.warn(Thread.currentThread().getName()+"\tSocketTimeoutException:url="+webUrl+"\t"+e.getMessage());
 			return null;
 		}
+		catch (FailingHttpStatusCodeException e) {
+			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tthe server returns a failing status code URL="+webUrl);
+			return null;
+		} 
+		catch (MalformedURLException e) {
+			WARN.warn(Thread.currentThread().getName()+e.getMessage()+"\tif no URL can be created from the provided string URL="+webUrl);
+			return null;
+		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
 			WARN.warn(Thread.currentThread().getName()+"\tIOException:url="+webUrl+"\t"+e.getMessage());
-//			e.printStackTrace();
 			return null;
 			
 		}finally{
 			long endTime = System.currentTimeMillis();
 			LOG.info("Time for read the page:"+(endTime-startTime)/1000 +" sec");
 		}
-		
 		
 		Document doc = Jsoup.parse(htmlPage.asXml());
 		LOG.info(Thread.currentThread().getName()+"Finish load jsoup document object...");

@@ -107,6 +107,7 @@ public class TargetImageSelector {
 	 */
 	private static WebImageObject getTargetImage(String queryurlstr, ArrayList<WebImageObject> targetImageObjs){
 		LOG.info(Thread.currentThread().getName()+"\tStart to calculate the image similarity..."+targetImageObjs.size());
+		
 		Map<WebImageObject,Integer> map = new HashMap<WebImageObject,Integer>();
 		Map<WebImageObject,Integer> mapSorted = new TreeMap<WebImageObject,Integer>();
 		
@@ -178,7 +179,6 @@ public class TargetImageSelector {
 			matcher.findMatches(targetKeypoints);
 			
 			int numMatches = matcher.getMatches().size();	
-//			LOG.info(Thread.currentThread().getName()+"\tNumber of matches for image " + targetImageObj.url + " is " + numMatches);
 			map.put(targetImageObj, numMatches);
 		}
 		
