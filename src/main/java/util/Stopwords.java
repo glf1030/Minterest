@@ -135,6 +135,6 @@ public class Stopwords {
 		'自',
 	};
 	
-	private static final HashSet<Character> stopwords = new HashSet<>(Arrays.asList(CH_STOPWORD));
+	private static final HashSet<Character> stopwords = new HashSet<Character>(Arrays.asList(CH_STOPWORD));
 	
 }

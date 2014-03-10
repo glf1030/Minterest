@@ -329,6 +329,7 @@ new TaoBaoCrawler().crawl();
 	public String retrievalImageFromSingleLink(String singleLink) throws NoSuchMethodException, ScriptException, InterruptedException
 	{
 		try {
+			System.out.println(singleLink);
 			String s=TaoBaoCrawlerSingleWeb.crawlSinglePage(singleLink,src);
 			if(s!=null)
 			{

@@ -202,7 +202,7 @@ public class TargetImageSelector {
 	
 	private static ArrayList<String> String2Bigrams(String str){
 		if(str ==null)return null;
-		ArrayList<String> result = new ArrayList<>();
+		ArrayList<String> result = new ArrayList<String>();
 		if(str.length() <3){
 			result.add(str);
 			return result;
@@ -269,12 +269,12 @@ public class TargetImageSelector {
 			summary ="";
 		}
 		
-		ArrayList<String> movieInfo = new ArrayList<>();
+		ArrayList<String> movieInfo = new ArrayList<String>();
 		movieInfo.add(movieName);
 		if(!director.equals(""))movieInfo.add(director);
 		for(String actor:actorList)if(!actor.equals(""))movieInfo.add(actor);
 		
-		ArrayList<String> bigrams = new ArrayList<>();
+		ArrayList<String> bigrams = new ArrayList<String>();
 		for(String minfo:movieInfo){
 			if(title.contains(minfo)){
 				LOG.info(Thread.currentThread().getName()+"\tTitle:"+title+"\tcontains:"+minfo);
@@ -299,7 +299,7 @@ public class TargetImageSelector {
 		
 		int count = 0;
 		HashSet<Character> stoplist = Stopwords.getStoplist();
-		HashSet<Character> summarySet = new HashSet<>();
+		HashSet<Character> summarySet = new HashSet<Character>();
 		char[] titleArr = title.toCharArray();
 		char[] summaryArr = summary.toCharArray();
 		

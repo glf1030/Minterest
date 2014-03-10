@@ -132,10 +132,10 @@ class Producer implements Runnable
 				BlockingQueue<String> queryList=mdb.getGoogleImageQueryList();
 				
 				int querySize=queryList.size();
-				for(int j=0;j<2;j++)
+				for(int j=0;j<querySize;j++)
 				{
 					String site_query=queryList.poll();
-					System.out.println(site_query);
+					taskLog.info(site_query);
 					crawler.crawler_google_image_htmlFormat(sf.format(date),mi,site_query,sharedQueue);
 
 				}
@@ -164,8 +164,8 @@ class Consumer implements Runnable
 {
 	Logger taskLog=Logger.getLogger("task");
 
-	int corePoolSize=10;
-	int maxiumPoolSize=20;
+	int corePoolSize=5;
+	int maxiumPoolSize=10;
 	long keepLiveTime=1000*60;
 	
 
@@ -247,9 +247,10 @@ class Consumer implements Runnable
 				// 在未来某个时间执行给定的命令
 
 				threadPool.execute(run);
-				
-				System.out.println("sharedQueue has "+sharedQueue.size());
-				System.out.println(sharedQueue.isEmpty());
+				taskLog.info("sharedQueue has "+sharedQueue.size());
+				taskLog.info("taskMonitor +"+taskMonitorQueue.peek());
+//				System.out.println("sharedQueue has "+sharedQueue.size());
+//				System.out.println(sharedQueue.isEmpty());
 				//System.out.println("taskMonitor"+taskMonitorQueue.peek());
 			}
 			else if(taskMonitorQueue.peek())
@@ -288,7 +289,6 @@ class Test1
 		taskLog.info(fileName+"is working");
 		System.out.println(fileName+"is working");
 //		 ImageCollector ic=new ImageCollector();
-//		ImageCollector.multipleStart(fileName, mi);
 		ImageCollector.singleStart(fileName, mi);
 		  // ic.singleStart(fileName);
 		Thread.sleep(1000*60);

@@ -98,12 +98,12 @@ public class Grawler
 	}
 	public synchronized void crawler_google_image_htmlFormat(String date,MovieItem mi, String site,BlockingQueue<HashMap<String,String[]>> taskQueue)  
 	{
-		
+		taskLog.info(mi.get_movie_name());
 	    String movieName=mi.get_movie_name();
 		 String pinyin=FileName2Pinyin.convertHanzi2PinyinStr(movieName);
 		 java.util.Properties prop=new 	java.util.Properties();
-		//File movieFolder=new File("/mnt/nfs/nas179/rideo/"+pinyin);
-	    File movieFolder=new File(folder+pinyin);
+		File movieFolder=new File("/mnt/nfs/nas179/rideo/"+pinyin);
+	   // File movieFolder=new File(folder+pinyin);
 		  if(!movieFolder.exists())
 		  {
 			  System.out.println(movieFolder.getAbsolutePath());
@@ -143,7 +143,7 @@ public class Grawler
 		    	
 		    	if(first_doc.select("[id=resultStats]")!=null&&!noresutls)
 		  {
-		  String number=first_doc.select("[id=resultStats]").html().trim().replace("About", "").replace("results", "").replace(",","").trim();
+		  String number=first_doc.select("[id=resultStats]").html().trim().replace("About", "").replace("results", "").replace(",","").replace("result","").trim();
 		 	
 	
 		  if(number.trim().length()!=0)

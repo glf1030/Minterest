@@ -44,7 +44,7 @@ public class BlockingSiteFactory {
 	
 	public BlockingSiteFactory() {
 		// TODO Auto-generated constructor stub
-		this.blockingSites = new HashSet<>();
+		this.blockingSites = new HashSet<String>();
 		try {
 			this.blockingSites.add(new URL("http://www.rpgwebgame.com/").getHost());
 			this.blockingSites.add(new URL("http://www.jnyl.org.cn/").getHost());

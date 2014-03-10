@@ -35,8 +35,13 @@ public class MessageListenerDeamon extends Thread
         
         	//System.out.println("loading movies");
         //   String duration=prop.get("Duration").toString();
-			new TaoBaoCrawler().crawl();
-   
+			//new TaoBaoCrawler().crawl();
+             try {
+				GoogleCrawler.crawler();
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
             while (true)
             {
                 try {
